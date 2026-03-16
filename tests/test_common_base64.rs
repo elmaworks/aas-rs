@@ -117,3 +117,17 @@ fn test_table_from_rickkas7() {
         assert_eq!(&decoded, bytes, "Decoded bytes");
     }
 }
+
+/// Documents padding inconsistency behavior: "SGVsbG9=" has wrong padding
+/// for "Hello" (correct is "SGVsbG8=") but may still decode successfully.
+/// See: https://eprint.iacr.org/2022/361.pdf
+#[test]
+fn test_padding_inconsistency_hello() {
+    let bad_encoded = "SGVsbG9=";
+    let result = base64_decode(bad_encoded);
+    // Document the actual behavior (accept or reject)
+    if let Ok(bytes) = result {
+        assert_eq!(bytes, b"Hello");
+    }
+    // If Err, a strict engine rejects the bad padding — also acceptable
+}

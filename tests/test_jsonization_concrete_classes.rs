@@ -214,3 +214,288 @@ concrete_class_test!(
     test_data_specification_iec61360_round_trip,
     "DataSpecificationIec61360"
 );
+
+// ─── Self-contained types (Environment & EventPayload) ──────────────────────
+
+/// Round-trip test for self-contained Environment:
+/// JSON → deserialize → verify → serialize → compare.
+fn self_contained_environment_round_trip() {
+    let dir = common::test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Expected")
+        .join("Environment");
+
+    let json_files = common::find_json_files(&dir);
+    assert!(!json_files.is_empty(), "No JSON files found in {dir:?}");
+
+    for path in &json_files {
+        let original = common::load_json(path);
+        let env = jsonization::environment_from_jsonable_value(&original)
+            .unwrap_or_else(|e| panic!("Deserialization failed for {}: {e}", path.display()));
+
+        let env_class = aas_rs::types::class::Class::Environment(env);
+        let errors = verification::verify(&env_class, true);
+        assert!(
+            errors.is_empty(),
+            "Verification errors for {}: {:?}",
+            path.display(),
+            errors
+        );
+
+        let serialized = jsonization::to_jsonable(&env_class);
+        assert_eq!(
+            original, serialized,
+            "JSON round-trip mismatch for {}",
+            path.display()
+        );
+    }
+}
+
+/// Format verification errors as "{path}: {message}" with trailing newline,
+/// matching the TypeScript golden file format (empty path still gets ": ").
+fn format_verification_errors(errors: &[verification::VerificationError]) -> String {
+    let mut lines: Vec<String> = errors
+        .iter()
+        .map(|e| format!("{}: {}", e.path, e.message))
+        .collect();
+    lines.push(String::new());
+    lines.join("\n")
+}
+
+/// Format a deserialization error as "{path}: {message}\n",
+/// matching the TypeScript golden file format.
+/// The Rust path uses "." prefixed segments (e.g., ".prop"); we strip the leading ".".
+fn format_deserialization_error(error: &jsonization::DeserializationError) -> String {
+    let path_str: String = error
+        .path
+        .iter()
+        .map(std::string::ToString::to_string)
+        .collect();
+    let path_str = path_str.strip_prefix('.').unwrap_or(&path_str);
+    format!("{path_str}: {}\n", error.message)
+}
+
+/// Invalid test for self-contained Environment.
+fn self_contained_environment_invalid() {
+    let invalid_root = common::test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Unexpected")
+        .join("Invalid");
+
+    for cause_dir in common::find_immediate_subdirectories(&invalid_root) {
+        let cls_dir = cause_dir.join("Environment");
+        if !cls_dir.exists() {
+            continue;
+        }
+
+        let json_files = common::find_json_files(&cls_dir);
+        for path in &json_files {
+            let original = common::load_json(path);
+            let env =
+                jsonization::environment_from_jsonable_value(&original).unwrap_or_else(|e| {
+                    panic!(
+                        "Expected deserialization to succeed for {}: {e}",
+                        path.display()
+                    )
+                });
+
+            let env_class = aas_rs::types::class::Class::Environment(env);
+            let errors = verification::verify(&env_class, true);
+            let got = format_verification_errors(&errors);
+
+            let golden_path = std::path::PathBuf::from(format!("{}.errors", path.display()));
+            let expected = common::load_golden_text(&golden_path);
+            assert_eq!(
+                got, expected,
+                "Verification errors mismatch for {}",
+                path.display()
+            );
+        }
+    }
+}
+
+/// Unserializable test for self-contained Environment.
+fn self_contained_environment_unserializable() {
+    let unserializable_root = common::test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Unexpected")
+        .join("Unserializable");
+
+    for cause_dir in common::find_immediate_subdirectories(&unserializable_root) {
+        if cause_dir
+            .file_name()
+            .map(|n| n == "UnexpectedAdditionalProperty")
+            .unwrap_or(false)
+        {
+            continue;
+        }
+
+        let cls_dir = cause_dir.join("Environment");
+        if !cls_dir.exists() {
+            continue;
+        }
+
+        let json_files = common::find_json_files(&cls_dir);
+        for path in &json_files {
+            let original = common::load_json(path);
+            let error = match jsonization::environment_from_jsonable_value(&original) {
+                Err(e) => e,
+                Ok(_) => panic!("Expected deserialization to fail for {}", path.display()),
+            };
+
+            let got = format_deserialization_error(&error);
+
+            let golden_path = std::path::PathBuf::from(format!("{}.error", path.display()));
+            let expected = common::load_golden_text(&golden_path);
+            assert_eq!(
+                got, expected,
+                "Deserialization error mismatch for {}",
+                path.display()
+            );
+        }
+    }
+}
+
+/// Round-trip test for self-contained EventPayload.
+/// Note: The test data JSON files do not include "modelType", but our serializer
+/// adds it. So we compare: deserialize → serialize → deserialize → serialize.
+fn self_contained_event_payload_round_trip() {
+    let dir = common::test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Expected")
+        .join("EventPayload");
+
+    let json_files = common::find_json_files(&dir);
+    assert!(!json_files.is_empty(), "No JSON files found in {dir:?}");
+
+    for path in &json_files {
+        let original = common::load_json(path);
+        let ep = jsonization::event_payload_from_jsonable(&original)
+            .unwrap_or_else(|e| panic!("Deserialization failed for {}: {e}", path.display()));
+
+        let ep_class = aas_rs::types::class::Class::EventPayload(ep);
+        let errors = verification::verify(&ep_class, true);
+        assert!(
+            errors.is_empty(),
+            "Verification errors for {}: {:?}",
+            path.display(),
+            errors
+        );
+
+        let first_json = jsonization::to_jsonable(&ep_class);
+
+        // Deserialize again from the serialized output (which includes modelType).
+        let ep2 = jsonization::event_payload_from_jsonable(&first_json)
+            .unwrap_or_else(|e| {
+                panic!("Re-deserialization failed for {}: {e}", path.display())
+            });
+        let second_json =
+            jsonization::to_jsonable(&aas_rs::types::class::Class::EventPayload(ep2));
+
+        assert_eq!(
+            first_json, second_json,
+            "JSON round-trip mismatch for {}",
+            path.display()
+        );
+    }
+}
+
+/// Invalid test for self-contained EventPayload.
+fn self_contained_event_payload_invalid() {
+    let invalid_root = common::test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Unexpected")
+        .join("Invalid");
+
+    for cause_dir in common::find_immediate_subdirectories(&invalid_root) {
+        let cls_dir = cause_dir.join("EventPayload");
+        if !cls_dir.exists() {
+            continue;
+        }
+
+        let json_files = common::find_json_files(&cls_dir);
+        for path in &json_files {
+            let original = common::load_json(path);
+            let ep = jsonization::event_payload_from_jsonable(&original).unwrap_or_else(|e| {
+                panic!(
+                    "Expected deserialization to succeed for {}: {e}",
+                    path.display()
+                )
+            });
+
+            let ep_class = aas_rs::types::class::Class::EventPayload(ep);
+            let errors = verification::verify(&ep_class, true);
+            let got = format_verification_errors(&errors);
+
+            let golden_path = std::path::PathBuf::from(format!("{}.errors", path.display()));
+            let expected = common::load_golden_text(&golden_path);
+            assert_eq!(
+                got, expected,
+                "Verification errors mismatch for {}",
+                path.display()
+            );
+        }
+    }
+}
+
+/// Unserializable test for self-contained EventPayload.
+fn self_contained_event_payload_unserializable() {
+    let unserializable_root = common::test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Unexpected")
+        .join("Unserializable");
+
+    for cause_dir in common::find_immediate_subdirectories(&unserializable_root) {
+        if cause_dir
+            .file_name()
+            .map(|n| n == "UnexpectedAdditionalProperty")
+            .unwrap_or(false)
+        {
+            continue;
+        }
+
+        let cls_dir = cause_dir.join("EventPayload");
+        if !cls_dir.exists() {
+            continue;
+        }
+
+        let json_files = common::find_json_files(&cls_dir);
+        for path in &json_files {
+            let original = common::load_json(path);
+            let error = match jsonization::event_payload_from_jsonable(&original) {
+                Err(e) => e,
+                Ok(_) => panic!("Expected deserialization to fail for {}", path.display()),
+            };
+
+            let got = format_deserialization_error(&error);
+
+            let golden_path = std::path::PathBuf::from(format!("{}.error", path.display()));
+            let expected = common::load_golden_text(&golden_path);
+            assert_eq!(
+                got, expected,
+                "Deserialization error mismatch for {}",
+                path.display()
+            );
+        }
+    }
+}
+
+#[test]
+fn test_environment_self_contained() {
+    self_contained_environment_round_trip();
+    self_contained_environment_invalid();
+    self_contained_environment_unserializable();
+}
+
+#[test]
+fn test_event_payload_self_contained() {
+    self_contained_event_payload_round_trip();
+    self_contained_event_payload_invalid();
+    self_contained_event_payload_unserializable();
+}

@@ -129,3 +129,25 @@ outside_container_test!(
     test_data_specification_iec61360_outside_container,
     "DataSpecificationIec61360"
 );
+
+#[test]
+fn test_environment_outside_container() {
+    let instance = common::load_maximal_environment();
+    let first_json = jsonization::to_jsonable(&instance);
+    let env = jsonization::environment_from_jsonable_value(&first_json)
+        .unwrap_or_else(|e| panic!("Failed to deserialize Environment: {e}"));
+    let second_json =
+        jsonization::to_jsonable(&aas_rs::types::class::Class::Environment(env));
+    assert_eq!(first_json, second_json);
+}
+
+#[test]
+fn test_event_payload_outside_container() {
+    let instance = common::load_maximal_event_payload();
+    let first_json = jsonization::to_jsonable(&instance);
+    let ep = jsonization::event_payload_from_jsonable(&first_json)
+        .unwrap_or_else(|e| panic!("Failed to deserialize EventPayload: {e}"));
+    let second_json =
+        jsonization::to_jsonable(&aas_rs::types::class::Class::EventPayload(ep));
+    assert_eq!(first_json, second_json);
+}

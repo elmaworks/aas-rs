@@ -242,6 +242,20 @@ pub fn load_minimal_event_payload() -> Class {
     Class::EventPayload(ep)
 }
 
+/// Loads an `EventPayload` from the SelfContained/Expected/EventPayload/maximal.json.
+pub fn load_maximal_event_payload() -> Class {
+    let path = test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Expected")
+        .join("EventPayload")
+        .join("maximal.json");
+    let v = load_json(&path);
+    let ep = aas_rs::jsonization::event_payload_from_jsonable(&v)
+        .unwrap_or_else(|e| panic!("Failed to deserialize maximal EventPayload: {e}"));
+    Class::EventPayload(ep)
+}
+
 /// Verifies JSON round-trip: `original_json` → deserialize → serialize → compare.
 ///
 /// Returns `None` on success or a descriptive error string.

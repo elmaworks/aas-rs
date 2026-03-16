@@ -136,6 +136,18 @@
       "files": [
         "tests/test_types_over_x_or_empty.rs"
       ]
+    },
+    {
+      "id": 11,
+      "name": "Test Coverage Gap — Phase 5: Jsonization & Base64 missing tests",
+      "description": "Add Environment & EventPayload self-contained tests to jsonization concrete classes and outside container tests, add base64 padding inconsistency test",
+      "status": "completed",
+      "files": [
+        "tests/common/mod.rs",
+        "tests/test_jsonization_concrete_classes.rs",
+        "tests/test_jsonization_concrete_classes_outside_container.rs",
+        "tests/test_common_base64.rs"
+      ]
     }
   ]
 }
