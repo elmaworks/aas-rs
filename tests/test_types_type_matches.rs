@@ -292,3 +292,19 @@ fn test_submodel_element_collection_is_submodel_element_collection() {
     assert!(inst.is_submodel_element_collection());
     assert!(!inst.is_submodel_element_list());
 }
+
+#[test]
+fn test_environment_is_environment() {
+    let inst = common::load_minimal_environment();
+    assert!(inst.is_environment());
+    assert!(!inst.is_submodel());
+    assert!(!inst.is_extension());
+}
+
+#[test]
+fn test_event_payload_is_event_payload() {
+    let inst = common::load_minimal_event_payload();
+    assert!(inst.is_event_payload());
+    assert!(!inst.is_basic_event_element());
+    assert!(!inst.is_extension());
+}
