@@ -132,7 +132,7 @@
       "id": 10,
       "name": "Test Coverage Gap — Phase 4: Types overXOrEmpty completion",
       "description": "Add ~80 missing over_x_or_empty tests to test_types_over_x_or_empty.rs using macros (currently only 28 of ~111)",
-      "status": "pending",
+      "status": "completed",
       "files": [
         "tests/test_types_over_x_or_empty.rs"
       ]

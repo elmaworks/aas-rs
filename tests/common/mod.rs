@@ -200,6 +200,34 @@ pub fn load_golden_text(path: &Path) -> String {
         .replace("\r\n", "\n")
 }
 
+/// Loads an `Environment` from the SelfContained/Expected/Environment/minimal.json.
+pub fn load_minimal_environment() -> Class {
+    let path = test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Expected")
+        .join("Environment")
+        .join("minimal.json");
+    let v = load_json(&path);
+    let env = aas_rs::jsonization::environment_from_jsonable_value(&v)
+        .unwrap_or_else(|e| panic!("Failed to deserialize minimal Environment: {e}"));
+    Class::Environment(env)
+}
+
+/// Loads an `Environment` from the SelfContained/Expected/Environment/maximal.json.
+pub fn load_maximal_environment() -> Class {
+    let path = test_data_dir()
+        .join("Json")
+        .join("SelfContained")
+        .join("Expected")
+        .join("Environment")
+        .join("maximal.json");
+    let v = load_json(&path);
+    let env = aas_rs::jsonization::environment_from_jsonable_value(&v)
+        .unwrap_or_else(|e| panic!("Failed to deserialize maximal Environment: {e}"));
+    Class::Environment(env)
+}
+
 /// Loads an `EventPayload` from the SelfContained/Expected/EventPayload/minimal.json.
 pub fn load_minimal_event_payload() -> Class {
     let path = test_data_dir()
