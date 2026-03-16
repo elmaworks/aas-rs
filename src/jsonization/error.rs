@@ -35,7 +35,11 @@ impl fmt::Display for DeserializationError {
         if self.path.is_empty() {
             write!(f, "{}", self.message)
         } else {
-            let path_str: String = self.path.iter().map(|s| s.to_string()).collect();
+            let path_str: String = self
+                .path
+                .iter()
+                .map(std::string::ToString::to_string)
+                .collect();
             write!(f, "{}: {}", path_str, self.message)
         }
     }

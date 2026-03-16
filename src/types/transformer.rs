@@ -11,8 +11,8 @@ use super::structs_lang::{
     LangStringPreferredNameTypeIec61360, LangStringShortNameTypeIec61360, LangStringTextType,
 };
 use super::structs_support::{
-    EventPayload, Extension, Key, LevelType, OperationVariable, Qualifier, Reference,
-    SpecificAssetId, ValueList, ValueReferencePair, Resource,
+    EventPayload, Extension, Key, LevelType, OperationVariable, Qualifier, Reference, Resource,
+    SpecificAssetId, ValueList, ValueReferencePair,
 };
 
 /// Transformer trait that transforms AAS element types to `T`.
@@ -127,8 +127,11 @@ pub trait TransformerWithContext<C, T> {
         context: &C,
     ) -> T;
     /// Transforms an [`AssetInformation`] with context.
-    fn transform_asset_information_with_context(&mut self, that: &AssetInformation, context: &C)
-        -> T;
+    fn transform_asset_information_with_context(
+        &mut self,
+        that: &AssetInformation,
+        context: &C,
+    ) -> T;
     /// Transforms a [`Resource`] with context.
     fn transform_resource_with_context(&mut self, that: &Resource, context: &C) -> T;
     /// Transforms a [`SpecificAssetId`] with context.

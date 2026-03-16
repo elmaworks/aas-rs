@@ -11,8 +11,8 @@ use super::structs_lang::{
     LangStringPreferredNameTypeIec61360, LangStringShortNameTypeIec61360, LangStringTextType,
 };
 use super::structs_support::{
-    EventPayload, Extension, Key, LevelType, OperationVariable, Qualifier, Reference,
-    SpecificAssetId, ValueList, ValueReferencePair, Resource,
+    EventPayload, Extension, Key, LevelType, OperationVariable, Qualifier, Reference, Resource,
+    SpecificAssetId, ValueList, ValueReferencePair,
 };
 
 /// Visitor trait for visiting all AAS element types.
@@ -134,11 +134,7 @@ pub trait VisitorWithContext<C> {
     /// Visits a [`RelationshipElement`] with context.
     fn visit_relationship_element_with_context(&mut self, that: &RelationshipElement, context: &C);
     /// Visits a [`SubmodelElementList`] with context.
-    fn visit_submodel_element_list_with_context(
-        &mut self,
-        that: &SubmodelElementList,
-        context: &C,
-    );
+    fn visit_submodel_element_list_with_context(&mut self, that: &SubmodelElementList, context: &C);
     /// Visits a [`SubmodelElementCollection`] with context.
     fn visit_submodel_element_collection_with_context(
         &mut self,

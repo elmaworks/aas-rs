@@ -1,9 +1,7 @@
 use super::class::Class;
 use super::enums::{AasSubmodelElements, DataTypeDefXsd, Direction, EntityType, StateOfEvent};
 use super::structs_lang::{LangStringNameType, LangStringTextType};
-use super::structs_support::{
-    Extension, OperationVariable, Qualifier, Reference, SpecificAssetId,
-};
+use super::structs_support::{Extension, OperationVariable, Qualifier, Reference, SpecificAssetId};
 
 /// An embedded data specification.
 #[derive(Debug, Clone)]

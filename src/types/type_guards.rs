@@ -12,19 +12,27 @@ use super::structs_lang::{
     LangStringPreferredNameTypeIec61360, LangStringShortNameTypeIec61360, LangStringTextType,
 };
 use super::structs_support::{
-    EventPayload, Extension, Key, LevelType, OperationVariable, Qualifier, Reference,
-    SpecificAssetId, ValueList, ValueReferencePair, Resource,
+    EventPayload, Extension, Key, LevelType, OperationVariable, Qualifier, Reference, Resource,
+    SpecificAssetId, ValueList, ValueReferencePair,
 };
 
 impl Class {
     /// Returns a reference to the inner [`Extension`] if this is `Class::Extension`.
     pub fn as_extension(&self) -> Option<&Extension> {
-        if let Class::Extension(x) = self { Some(x) } else { None }
+        if let Class::Extension(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Extension`] if this is `Class::Extension`.
     pub fn as_extension_mut(&mut self) -> Option<&mut Extension> {
-        if let Class::Extension(x) = self { Some(x) } else { None }
+        if let Class::Extension(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Extension`.
@@ -34,12 +42,20 @@ impl Class {
 
     /// Returns a reference to the inner [`AdministrativeInformation`] if applicable.
     pub fn as_administrative_information(&self) -> Option<&AdministrativeInformation> {
-        if let Class::AdministrativeInformation(x) = self { Some(x) } else { None }
+        if let Class::AdministrativeInformation(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`AdministrativeInformation`] if applicable.
     pub fn as_administrative_information_mut(&mut self) -> Option<&mut AdministrativeInformation> {
-        if let Class::AdministrativeInformation(x) = self { Some(x) } else { None }
+        if let Class::AdministrativeInformation(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::AdministrativeInformation`.
@@ -49,12 +65,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Qualifier`] if applicable.
     pub fn as_qualifier(&self) -> Option<&Qualifier> {
-        if let Class::Qualifier(x) = self { Some(x) } else { None }
+        if let Class::Qualifier(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Qualifier`] if applicable.
     pub fn as_qualifier_mut(&mut self) -> Option<&mut Qualifier> {
-        if let Class::Qualifier(x) = self { Some(x) } else { None }
+        if let Class::Qualifier(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Qualifier`.
@@ -64,12 +88,20 @@ impl Class {
 
     /// Returns a reference to the inner [`AssetAdministrationShell`] if applicable.
     pub fn as_asset_administration_shell(&self) -> Option<&AssetAdministrationShell> {
-        if let Class::AssetAdministrationShell(x) = self { Some(x) } else { None }
+        if let Class::AssetAdministrationShell(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`AssetAdministrationShell`] if applicable.
     pub fn as_asset_administration_shell_mut(&mut self) -> Option<&mut AssetAdministrationShell> {
-        if let Class::AssetAdministrationShell(x) = self { Some(x) } else { None }
+        if let Class::AssetAdministrationShell(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::AssetAdministrationShell`.
@@ -79,12 +111,20 @@ impl Class {
 
     /// Returns a reference to the inner [`AssetInformation`] if applicable.
     pub fn as_asset_information(&self) -> Option<&AssetInformation> {
-        if let Class::AssetInformation(x) = self { Some(x) } else { None }
+        if let Class::AssetInformation(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`AssetInformation`] if applicable.
     pub fn as_asset_information_mut(&mut self) -> Option<&mut AssetInformation> {
-        if let Class::AssetInformation(x) = self { Some(x) } else { None }
+        if let Class::AssetInformation(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::AssetInformation`.
@@ -94,12 +134,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Resource`] if applicable.
     pub fn as_resource(&self) -> Option<&Resource> {
-        if let Class::Resource(x) = self { Some(x) } else { None }
+        if let Class::Resource(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Resource`] if applicable.
     pub fn as_resource_mut(&mut self) -> Option<&mut Resource> {
-        if let Class::Resource(x) = self { Some(x) } else { None }
+        if let Class::Resource(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Resource`.
@@ -109,12 +157,20 @@ impl Class {
 
     /// Returns a reference to the inner [`SpecificAssetId`] if applicable.
     pub fn as_specific_asset_id(&self) -> Option<&SpecificAssetId> {
-        if let Class::SpecificAssetId(x) = self { Some(x) } else { None }
+        if let Class::SpecificAssetId(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`SpecificAssetId`] if applicable.
     pub fn as_specific_asset_id_mut(&mut self) -> Option<&mut SpecificAssetId> {
-        if let Class::SpecificAssetId(x) = self { Some(x) } else { None }
+        if let Class::SpecificAssetId(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::SpecificAssetId`.
@@ -124,12 +180,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Submodel`] if applicable.
     pub fn as_submodel(&self) -> Option<&Submodel> {
-        if let Class::Submodel(x) = self { Some(x) } else { None }
+        if let Class::Submodel(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Submodel`] if applicable.
     pub fn as_submodel_mut(&mut self) -> Option<&mut Submodel> {
-        if let Class::Submodel(x) = self { Some(x) } else { None }
+        if let Class::Submodel(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Submodel`.
@@ -139,12 +203,20 @@ impl Class {
 
     /// Returns a reference to the inner [`RelationshipElement`] if applicable.
     pub fn as_relationship_element(&self) -> Option<&RelationshipElement> {
-        if let Class::RelationshipElement(x) = self { Some(x) } else { None }
+        if let Class::RelationshipElement(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`RelationshipElement`] if applicable.
     pub fn as_relationship_element_mut(&mut self) -> Option<&mut RelationshipElement> {
-        if let Class::RelationshipElement(x) = self { Some(x) } else { None }
+        if let Class::RelationshipElement(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::RelationshipElement`.
@@ -154,12 +226,20 @@ impl Class {
 
     /// Returns a reference to the inner [`SubmodelElementList`] if applicable.
     pub fn as_submodel_element_list(&self) -> Option<&SubmodelElementList> {
-        if let Class::SubmodelElementList(x) = self { Some(x) } else { None }
+        if let Class::SubmodelElementList(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`SubmodelElementList`] if applicable.
     pub fn as_submodel_element_list_mut(&mut self) -> Option<&mut SubmodelElementList> {
-        if let Class::SubmodelElementList(x) = self { Some(x) } else { None }
+        if let Class::SubmodelElementList(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::SubmodelElementList`.
@@ -169,12 +249,20 @@ impl Class {
 
     /// Returns a reference to the inner [`SubmodelElementCollection`] if applicable.
     pub fn as_submodel_element_collection(&self) -> Option<&SubmodelElementCollection> {
-        if let Class::SubmodelElementCollection(x) = self { Some(x) } else { None }
+        if let Class::SubmodelElementCollection(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`SubmodelElementCollection`] if applicable.
     pub fn as_submodel_element_collection_mut(&mut self) -> Option<&mut SubmodelElementCollection> {
-        if let Class::SubmodelElementCollection(x) = self { Some(x) } else { None }
+        if let Class::SubmodelElementCollection(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::SubmodelElementCollection`.
@@ -184,12 +272,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Property`] if applicable.
     pub fn as_property(&self) -> Option<&Property> {
-        if let Class::Property(x) = self { Some(x) } else { None }
+        if let Class::Property(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Property`] if applicable.
     pub fn as_property_mut(&mut self) -> Option<&mut Property> {
-        if let Class::Property(x) = self { Some(x) } else { None }
+        if let Class::Property(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Property`.
@@ -199,12 +295,20 @@ impl Class {
 
     /// Returns a reference to the inner [`MultiLanguageProperty`] if applicable.
     pub fn as_multi_language_property(&self) -> Option<&MultiLanguageProperty> {
-        if let Class::MultiLanguageProperty(x) = self { Some(x) } else { None }
+        if let Class::MultiLanguageProperty(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`MultiLanguageProperty`] if applicable.
     pub fn as_multi_language_property_mut(&mut self) -> Option<&mut MultiLanguageProperty> {
-        if let Class::MultiLanguageProperty(x) = self { Some(x) } else { None }
+        if let Class::MultiLanguageProperty(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::MultiLanguageProperty`.
@@ -214,12 +318,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Range`] if applicable.
     pub fn as_range(&self) -> Option<&Range> {
-        if let Class::Range(x) = self { Some(x) } else { None }
+        if let Class::Range(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Range`] if applicable.
     pub fn as_range_mut(&mut self) -> Option<&mut Range> {
-        if let Class::Range(x) = self { Some(x) } else { None }
+        if let Class::Range(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Range`.
@@ -229,12 +341,20 @@ impl Class {
 
     /// Returns a reference to the inner [`ReferenceElement`] if applicable.
     pub fn as_reference_element(&self) -> Option<&ReferenceElement> {
-        if let Class::ReferenceElement(x) = self { Some(x) } else { None }
+        if let Class::ReferenceElement(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`ReferenceElement`] if applicable.
     pub fn as_reference_element_mut(&mut self) -> Option<&mut ReferenceElement> {
-        if let Class::ReferenceElement(x) = self { Some(x) } else { None }
+        if let Class::ReferenceElement(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::ReferenceElement`.
@@ -244,12 +364,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Blob`] if applicable.
     pub fn as_blob(&self) -> Option<&Blob> {
-        if let Class::Blob(x) = self { Some(x) } else { None }
+        if let Class::Blob(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Blob`] if applicable.
     pub fn as_blob_mut(&mut self) -> Option<&mut Blob> {
-        if let Class::Blob(x) = self { Some(x) } else { None }
+        if let Class::Blob(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Blob`.
@@ -259,12 +387,20 @@ impl Class {
 
     /// Returns a reference to the inner [`File`] if applicable.
     pub fn as_file(&self) -> Option<&File> {
-        if let Class::File(x) = self { Some(x) } else { None }
+        if let Class::File(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`File`] if applicable.
     pub fn as_file_mut(&mut self) -> Option<&mut File> {
-        if let Class::File(x) = self { Some(x) } else { None }
+        if let Class::File(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::File`.
@@ -274,14 +410,22 @@ impl Class {
 
     /// Returns a reference to the inner [`AnnotatedRelationshipElement`] if applicable.
     pub fn as_annotated_relationship_element(&self) -> Option<&AnnotatedRelationshipElement> {
-        if let Class::AnnotatedRelationshipElement(x) = self { Some(x) } else { None }
+        if let Class::AnnotatedRelationshipElement(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`AnnotatedRelationshipElement`] if applicable.
     pub fn as_annotated_relationship_element_mut(
         &mut self,
     ) -> Option<&mut AnnotatedRelationshipElement> {
-        if let Class::AnnotatedRelationshipElement(x) = self { Some(x) } else { None }
+        if let Class::AnnotatedRelationshipElement(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::AnnotatedRelationshipElement`.
@@ -291,12 +435,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Entity`] if applicable.
     pub fn as_entity(&self) -> Option<&Entity> {
-        if let Class::Entity(x) = self { Some(x) } else { None }
+        if let Class::Entity(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Entity`] if applicable.
     pub fn as_entity_mut(&mut self) -> Option<&mut Entity> {
-        if let Class::Entity(x) = self { Some(x) } else { None }
+        if let Class::Entity(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Entity`.
@@ -306,12 +458,20 @@ impl Class {
 
     /// Returns a reference to the inner [`EventPayload`] if applicable.
     pub fn as_event_payload(&self) -> Option<&EventPayload> {
-        if let Class::EventPayload(x) = self { Some(x) } else { None }
+        if let Class::EventPayload(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`EventPayload`] if applicable.
     pub fn as_event_payload_mut(&mut self) -> Option<&mut EventPayload> {
-        if let Class::EventPayload(x) = self { Some(x) } else { None }
+        if let Class::EventPayload(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::EventPayload`.
@@ -321,12 +481,20 @@ impl Class {
 
     /// Returns a reference to the inner [`BasicEventElement`] if applicable.
     pub fn as_basic_event_element(&self) -> Option<&BasicEventElement> {
-        if let Class::BasicEventElement(x) = self { Some(x) } else { None }
+        if let Class::BasicEventElement(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`BasicEventElement`] if applicable.
     pub fn as_basic_event_element_mut(&mut self) -> Option<&mut BasicEventElement> {
-        if let Class::BasicEventElement(x) = self { Some(x) } else { None }
+        if let Class::BasicEventElement(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::BasicEventElement`.
@@ -336,12 +504,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Operation`] if applicable.
     pub fn as_operation(&self) -> Option<&Operation> {
-        if let Class::Operation(x) = self { Some(x) } else { None }
+        if let Class::Operation(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Operation`] if applicable.
     pub fn as_operation_mut(&mut self) -> Option<&mut Operation> {
-        if let Class::Operation(x) = self { Some(x) } else { None }
+        if let Class::Operation(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Operation`.
@@ -351,12 +527,20 @@ impl Class {
 
     /// Returns a reference to the inner [`OperationVariable`] if applicable.
     pub fn as_operation_variable(&self) -> Option<&OperationVariable> {
-        if let Class::OperationVariable(x) = self { Some(x) } else { None }
+        if let Class::OperationVariable(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`OperationVariable`] if applicable.
     pub fn as_operation_variable_mut(&mut self) -> Option<&mut OperationVariable> {
-        if let Class::OperationVariable(x) = self { Some(x) } else { None }
+        if let Class::OperationVariable(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::OperationVariable`.
@@ -366,12 +550,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Capability`] if applicable.
     pub fn as_capability(&self) -> Option<&Capability> {
-        if let Class::Capability(x) = self { Some(x) } else { None }
+        if let Class::Capability(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Capability`] if applicable.
     pub fn as_capability_mut(&mut self) -> Option<&mut Capability> {
-        if let Class::Capability(x) = self { Some(x) } else { None }
+        if let Class::Capability(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Capability`.
@@ -381,12 +573,20 @@ impl Class {
 
     /// Returns a reference to the inner [`ConceptDescription`] if applicable.
     pub fn as_concept_description(&self) -> Option<&ConceptDescription> {
-        if let Class::ConceptDescription(x) = self { Some(x) } else { None }
+        if let Class::ConceptDescription(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`ConceptDescription`] if applicable.
     pub fn as_concept_description_mut(&mut self) -> Option<&mut ConceptDescription> {
-        if let Class::ConceptDescription(x) = self { Some(x) } else { None }
+        if let Class::ConceptDescription(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::ConceptDescription`.
@@ -396,12 +596,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Reference`] if applicable.
     pub fn as_reference(&self) -> Option<&Reference> {
-        if let Class::Reference(x) = self { Some(x) } else { None }
+        if let Class::Reference(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Reference`] if applicable.
     pub fn as_reference_mut(&mut self) -> Option<&mut Reference> {
-        if let Class::Reference(x) = self { Some(x) } else { None }
+        if let Class::Reference(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Reference`.
@@ -411,12 +619,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Key`] if applicable.
     pub fn as_key(&self) -> Option<&Key> {
-        if let Class::Key(x) = self { Some(x) } else { None }
+        if let Class::Key(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Key`] if applicable.
     pub fn as_key_mut(&mut self) -> Option<&mut Key> {
-        if let Class::Key(x) = self { Some(x) } else { None }
+        if let Class::Key(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Key`.
@@ -426,12 +642,20 @@ impl Class {
 
     /// Returns a reference to the inner [`LangStringNameType`] if applicable.
     pub fn as_lang_string_name_type(&self) -> Option<&LangStringNameType> {
-        if let Class::LangStringNameType(x) = self { Some(x) } else { None }
+        if let Class::LangStringNameType(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`LangStringNameType`] if applicable.
     pub fn as_lang_string_name_type_mut(&mut self) -> Option<&mut LangStringNameType> {
-        if let Class::LangStringNameType(x) = self { Some(x) } else { None }
+        if let Class::LangStringNameType(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::LangStringNameType`.
@@ -441,12 +665,20 @@ impl Class {
 
     /// Returns a reference to the inner [`LangStringTextType`] if applicable.
     pub fn as_lang_string_text_type(&self) -> Option<&LangStringTextType> {
-        if let Class::LangStringTextType(x) = self { Some(x) } else { None }
+        if let Class::LangStringTextType(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`LangStringTextType`] if applicable.
     pub fn as_lang_string_text_type_mut(&mut self) -> Option<&mut LangStringTextType> {
-        if let Class::LangStringTextType(x) = self { Some(x) } else { None }
+        if let Class::LangStringTextType(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::LangStringTextType`.
@@ -456,12 +688,20 @@ impl Class {
 
     /// Returns a reference to the inner [`Environment`] if applicable.
     pub fn as_environment(&self) -> Option<&Environment> {
-        if let Class::Environment(x) = self { Some(x) } else { None }
+        if let Class::Environment(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`Environment`] if applicable.
     pub fn as_environment_mut(&mut self) -> Option<&mut Environment> {
-        if let Class::Environment(x) = self { Some(x) } else { None }
+        if let Class::Environment(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::Environment`.
@@ -471,12 +711,20 @@ impl Class {
 
     /// Returns a reference to the inner [`EmbeddedDataSpecification`] if applicable.
     pub fn as_embedded_data_specification(&self) -> Option<&EmbeddedDataSpecification> {
-        if let Class::EmbeddedDataSpecification(x) = self { Some(x) } else { None }
+        if let Class::EmbeddedDataSpecification(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`EmbeddedDataSpecification`] if applicable.
     pub fn as_embedded_data_specification_mut(&mut self) -> Option<&mut EmbeddedDataSpecification> {
-        if let Class::EmbeddedDataSpecification(x) = self { Some(x) } else { None }
+        if let Class::EmbeddedDataSpecification(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::EmbeddedDataSpecification`.
@@ -486,12 +734,20 @@ impl Class {
 
     /// Returns a reference to the inner [`LevelType`] if applicable.
     pub fn as_level_type(&self) -> Option<&LevelType> {
-        if let Class::LevelType(x) = self { Some(x) } else { None }
+        if let Class::LevelType(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`LevelType`] if applicable.
     pub fn as_level_type_mut(&mut self) -> Option<&mut LevelType> {
-        if let Class::LevelType(x) = self { Some(x) } else { None }
+        if let Class::LevelType(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::LevelType`.
@@ -501,12 +757,20 @@ impl Class {
 
     /// Returns a reference to the inner [`ValueReferencePair`] if applicable.
     pub fn as_value_reference_pair(&self) -> Option<&ValueReferencePair> {
-        if let Class::ValueReferencePair(x) = self { Some(x) } else { None }
+        if let Class::ValueReferencePair(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`ValueReferencePair`] if applicable.
     pub fn as_value_reference_pair_mut(&mut self) -> Option<&mut ValueReferencePair> {
-        if let Class::ValueReferencePair(x) = self { Some(x) } else { None }
+        if let Class::ValueReferencePair(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::ValueReferencePair`.
@@ -516,12 +780,20 @@ impl Class {
 
     /// Returns a reference to the inner [`ValueList`] if applicable.
     pub fn as_value_list(&self) -> Option<&ValueList> {
-        if let Class::ValueList(x) = self { Some(x) } else { None }
+        if let Class::ValueList(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`ValueList`] if applicable.
     pub fn as_value_list_mut(&mut self) -> Option<&mut ValueList> {
-        if let Class::ValueList(x) = self { Some(x) } else { None }
+        if let Class::ValueList(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::ValueList`.
@@ -612,12 +884,20 @@ impl Class {
 
     /// Returns a reference to the inner [`DataSpecificationIec61360`] if applicable.
     pub fn as_data_specification_iec61360(&self) -> Option<&DataSpecificationIec61360> {
-        if let Class::DataSpecificationIec61360(x) = self { Some(x) } else { None }
+        if let Class::DataSpecificationIec61360(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the inner [`DataSpecificationIec61360`] if applicable.
     pub fn as_data_specification_iec61360_mut(&mut self) -> Option<&mut DataSpecificationIec61360> {
-        if let Class::DataSpecificationIec61360(x) = self { Some(x) } else { None }
+        if let Class::DataSpecificationIec61360(x) = self {
+            Some(x)
+        } else {
+            None
+        }
     }
 
     /// Returns `true` if this is `Class::DataSpecificationIec61360`.
@@ -653,9 +933,7 @@ impl Class {
     pub fn is_identifiable(&self) -> bool {
         matches!(
             self,
-            Class::AssetAdministrationShell(_)
-                | Class::Submodel(_)
-                | Class::ConceptDescription(_)
+            Class::AssetAdministrationShell(_) | Class::Submodel(_) | Class::ConceptDescription(_)
         )
     }
 

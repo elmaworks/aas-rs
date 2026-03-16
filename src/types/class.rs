@@ -12,8 +12,8 @@ use super::structs_lang::{
     LangStringPreferredNameTypeIec61360, LangStringShortNameTypeIec61360, LangStringTextType,
 };
 use super::structs_support::{
-    EventPayload, Extension, Key, LevelType, OperationVariable, Qualifier, Reference,
-    SpecificAssetId, ValueList, ValueReferencePair, Resource,
+    EventPayload, Extension, Key, LevelType, OperationVariable, Qualifier, Reference, Resource,
+    SpecificAssetId, ValueList, ValueReferencePair,
 };
 
 /// Wraps all 38 concrete AAS types.
@@ -307,8 +307,11 @@ impl Class {
             Class::Qualifier(x) => descend_qualifier(x),
             Class::AssetAdministrationShell(x) => descend_asset_administration_shell(x),
             Class::AssetInformation(x) => descend_asset_information(x),
-            Class::Resource(_) | Class::Key(_) | Class::LangStringNameType(_)
-            | Class::LangStringTextType(_) | Class::LevelType(_)
+            Class::Resource(_)
+            | Class::Key(_)
+            | Class::LangStringNameType(_)
+            | Class::LangStringTextType(_)
+            | Class::LevelType(_)
             | Class::LangStringPreferredNameTypeIec61360(_)
             | Class::LangStringShortNameTypeIec61360(_)
             | Class::LangStringDefinitionTypeIec61360(_) => vec![],
@@ -323,19 +326,25 @@ impl Class {
             Class::SubmodelElementList(x) => descend_submodel_element_list(x),
             Class::SubmodelElementCollection(x) => {
                 let mut v = collect_sme_common_vec(x);
-                if let Some(vals) = &x.value { v.extend(vals.iter().cloned()); }
+                if let Some(vals) = &x.value {
+                    v.extend(vals.iter().cloned());
+                }
                 v
             }
             Class::Property(x) => {
                 let mut v = collect_sme_common_vec(x);
-                if let Some(vi) = &x.value_id { v.push(Class::Reference(vi.clone())); }
+                if let Some(vi) = &x.value_id {
+                    v.push(Class::Reference(vi.clone()));
+                }
                 v
             }
             Class::MultiLanguageProperty(x) => descend_multi_language_property(x),
             Class::Range(x) => collect_sme_common_vec(x),
             Class::ReferenceElement(x) => {
                 let mut v = collect_sme_common_vec(x);
-                if let Some(val) = &x.value { v.push(Class::Reference(val.clone())); }
+                if let Some(val) = &x.value {
+                    v.push(Class::Reference(val.clone()));
+                }
                 v
             }
             Class::Blob(x) => collect_sme_common_vec(x),
@@ -346,7 +355,9 @@ impl Class {
             Class::BasicEventElement(x) => {
                 let mut v = collect_sme_common_vec(x);
                 v.push(Class::Reference(x.observed.clone()));
-                if let Some(mb) = &x.message_broker { v.push(Class::Reference(mb.clone())); }
+                if let Some(mb) = &x.message_broker {
+                    v.push(Class::Reference(mb.clone()));
+                }
                 v
             }
             Class::Operation(x) => descend_operation(x),
@@ -412,14 +423,24 @@ trait SmeCommon {
 macro_rules! impl_sme_common {
     ($t:ty) => {
         impl SmeCommon for $t {
-            fn extensions(&self) -> &Option<Vec<Extension>> { &self.extensions }
-            fn display_name(&self) -> &Option<Vec<LangStringNameType>> { &self.display_name }
-            fn description(&self) -> &Option<Vec<LangStringTextType>> { &self.description }
-            fn semantic_id(&self) -> &Option<Reference> { &self.semantic_id }
+            fn extensions(&self) -> &Option<Vec<Extension>> {
+                &self.extensions
+            }
+            fn display_name(&self) -> &Option<Vec<LangStringNameType>> {
+                &self.display_name
+            }
+            fn description(&self) -> &Option<Vec<LangStringTextType>> {
+                &self.description
+            }
+            fn semantic_id(&self) -> &Option<Reference> {
+                &self.semantic_id
+            }
             fn supplemental_semantic_ids(&self) -> &Option<Vec<Reference>> {
                 &self.supplemental_semantic_ids
             }
-            fn qualifiers(&self) -> &Option<Vec<Qualifier>> { &self.qualifiers }
+            fn qualifiers(&self) -> &Option<Vec<Qualifier>> {
+                &self.qualifiers
+            }
             fn embedded_data_specifications(&self) -> &Option<Vec<EmbeddedDataSpecification>> {
                 &self.embedded_data_specifications
             }
@@ -463,14 +484,19 @@ fn collect_sme_common_vec(x: &impl SmeCommon) -> Vec<Class> {
         v.extend(qs.iter().map(|q| Class::Qualifier(q.clone())));
     }
     if let Some(eds) = x.embedded_data_specifications() {
-        v.extend(eds.iter().map(|e| Class::EmbeddedDataSpecification(e.clone())));
+        v.extend(
+            eds.iter()
+                .map(|e| Class::EmbeddedDataSpecification(e.clone())),
+        );
     }
     v
 }
 
 fn descend_extension(x: &Extension) -> Vec<Class> {
     let mut v = Vec::new();
-    if let Some(r) = &x.semantic_id { v.push(Class::Reference(r.clone())); }
+    if let Some(r) = &x.semantic_id {
+        v.push(Class::Reference(r.clone()));
+    }
     if let Some(refs) = &x.supplemental_semantic_ids {
         v.extend(refs.iter().map(|r| Class::Reference(r.clone())));
     }
@@ -483,34 +509,58 @@ fn descend_extension(x: &Extension) -> Vec<Class> {
 fn descend_administrative_information(x: &AdministrativeInformation) -> Vec<Class> {
     let mut v = Vec::new();
     if let Some(eds) = &x.embedded_data_specifications {
-        v.extend(eds.iter().map(|e| Class::EmbeddedDataSpecification(e.clone())));
+        v.extend(
+            eds.iter()
+                .map(|e| Class::EmbeddedDataSpecification(e.clone())),
+        );
     }
-    if let Some(c) = &x.creator { v.push(Class::Reference(c.clone())); }
+    if let Some(c) = &x.creator {
+        v.push(Class::Reference(c.clone()));
+    }
     v
 }
 
 fn descend_qualifier(x: &Qualifier) -> Vec<Class> {
     let mut v = Vec::new();
-    if let Some(r) = &x.semantic_id { v.push(Class::Reference(r.clone())); }
+    if let Some(r) = &x.semantic_id {
+        v.push(Class::Reference(r.clone()));
+    }
     if let Some(refs) = &x.supplemental_semantic_ids {
         v.extend(refs.iter().map(|r| Class::Reference(r.clone())));
     }
-    if let Some(vi) = &x.value_id { v.push(Class::Reference(vi.clone())); }
+    if let Some(vi) = &x.value_id {
+        v.push(Class::Reference(vi.clone()));
+    }
     v
 }
 
 fn descend_asset_administration_shell(x: &AssetAdministrationShell) -> Vec<Class> {
     let mut v = Vec::new();
-    if let Some(exts) = &x.extensions { v.extend(exts.iter().map(|e| Class::Extension(e.clone()))); }
-    if let Some(dn) = &x.display_name { v.extend(dn.iter().map(|l| Class::LangStringNameType(l.clone()))); }
-    if let Some(desc) = &x.description { v.extend(desc.iter().map(|l| Class::LangStringTextType(l.clone()))); }
-    if let Some(adm) = &x.administration { v.push(Class::AdministrativeInformation(adm.clone())); }
-    if let Some(eds) = &x.embedded_data_specifications {
-        v.extend(eds.iter().map(|e| Class::EmbeddedDataSpecification(e.clone())));
+    if let Some(exts) = &x.extensions {
+        v.extend(exts.iter().map(|e| Class::Extension(e.clone())));
     }
-    if let Some(df) = &x.derived_from { v.push(Class::Reference(df.clone())); }
+    if let Some(dn) = &x.display_name {
+        v.extend(dn.iter().map(|l| Class::LangStringNameType(l.clone())));
+    }
+    if let Some(desc) = &x.description {
+        v.extend(desc.iter().map(|l| Class::LangStringTextType(l.clone())));
+    }
+    if let Some(adm) = &x.administration {
+        v.push(Class::AdministrativeInformation(adm.clone()));
+    }
+    if let Some(eds) = &x.embedded_data_specifications {
+        v.extend(
+            eds.iter()
+                .map(|e| Class::EmbeddedDataSpecification(e.clone())),
+        );
+    }
+    if let Some(df) = &x.derived_from {
+        v.push(Class::Reference(df.clone()));
+    }
     v.push(Class::AssetInformation(x.asset_information.clone()));
-    if let Some(sms) = &x.submodels { v.extend(sms.iter().map(|r| Class::Reference(r.clone()))); }
+    if let Some(sms) = &x.submodels {
+        v.extend(sms.iter().map(|r| Class::Reference(r.clone())));
+    }
     v
 }
 
@@ -519,49 +569,80 @@ fn descend_asset_information(x: &AssetInformation) -> Vec<Class> {
     if let Some(ids) = &x.specific_asset_ids {
         v.extend(ids.iter().map(|s| Class::SpecificAssetId(s.clone())));
     }
-    if let Some(thumb) = &x.default_thumbnail { v.push(Class::Resource(thumb.clone())); }
+    if let Some(thumb) = &x.default_thumbnail {
+        v.push(Class::Resource(thumb.clone()));
+    }
     v
 }
 
 fn descend_specific_asset_id(x: &SpecificAssetId) -> Vec<Class> {
     let mut v = Vec::new();
-    if let Some(r) = &x.semantic_id { v.push(Class::Reference(r.clone())); }
+    if let Some(r) = &x.semantic_id {
+        v.push(Class::Reference(r.clone()));
+    }
     if let Some(refs) = &x.supplemental_semantic_ids {
         v.extend(refs.iter().map(|r| Class::Reference(r.clone())));
     }
-    if let Some(ext) = &x.external_subject_id { v.push(Class::Reference(ext.clone())); }
+    if let Some(ext) = &x.external_subject_id {
+        v.push(Class::Reference(ext.clone()));
+    }
     v
 }
 
 fn descend_submodel(x: &Submodel) -> Vec<Class> {
     let mut v = Vec::new();
-    if let Some(exts) = &x.extensions { v.extend(exts.iter().map(|e| Class::Extension(e.clone()))); }
-    if let Some(dn) = &x.display_name { v.extend(dn.iter().map(|l| Class::LangStringNameType(l.clone()))); }
-    if let Some(desc) = &x.description { v.extend(desc.iter().map(|l| Class::LangStringTextType(l.clone()))); }
-    if let Some(adm) = &x.administration { v.push(Class::AdministrativeInformation(adm.clone())); }
-    if let Some(r) = &x.semantic_id { v.push(Class::Reference(r.clone())); }
+    if let Some(exts) = &x.extensions {
+        v.extend(exts.iter().map(|e| Class::Extension(e.clone())));
+    }
+    if let Some(dn) = &x.display_name {
+        v.extend(dn.iter().map(|l| Class::LangStringNameType(l.clone())));
+    }
+    if let Some(desc) = &x.description {
+        v.extend(desc.iter().map(|l| Class::LangStringTextType(l.clone())));
+    }
+    if let Some(adm) = &x.administration {
+        v.push(Class::AdministrativeInformation(adm.clone()));
+    }
+    if let Some(r) = &x.semantic_id {
+        v.push(Class::Reference(r.clone()));
+    }
     if let Some(refs) = &x.supplemental_semantic_ids {
         v.extend(refs.iter().map(|r| Class::Reference(r.clone())));
     }
-    if let Some(qs) = &x.qualifiers { v.extend(qs.iter().map(|q| Class::Qualifier(q.clone()))); }
-    if let Some(eds) = &x.embedded_data_specifications {
-        v.extend(eds.iter().map(|e| Class::EmbeddedDataSpecification(e.clone())));
+    if let Some(qs) = &x.qualifiers {
+        v.extend(qs.iter().map(|q| Class::Qualifier(q.clone())));
     }
-    if let Some(sme) = &x.submodel_elements { v.extend(sme.iter().cloned()); }
+    if let Some(eds) = &x.embedded_data_specifications {
+        v.extend(
+            eds.iter()
+                .map(|e| Class::EmbeddedDataSpecification(e.clone())),
+        );
+    }
+    if let Some(sme) = &x.submodel_elements {
+        v.extend(sme.iter().cloned());
+    }
     v
 }
 
 fn descend_submodel_element_list(x: &SubmodelElementList) -> Vec<Class> {
     let mut v = collect_sme_common_vec(x);
-    if let Some(sile) = &x.semantic_id_list_element { v.push(Class::Reference(sile.clone())); }
-    if let Some(vals) = &x.value { v.extend(vals.iter().cloned()); }
+    if let Some(sile) = &x.semantic_id_list_element {
+        v.push(Class::Reference(sile.clone()));
+    }
+    if let Some(vals) = &x.value {
+        v.extend(vals.iter().cloned());
+    }
     v
 }
 
 fn descend_multi_language_property(x: &MultiLanguageProperty) -> Vec<Class> {
     let mut v = collect_sme_common_vec(x);
-    if let Some(vals) = &x.value { v.extend(vals.iter().map(|l| Class::LangStringTextType(l.clone()))); }
-    if let Some(vi) = &x.value_id { v.push(Class::Reference(vi.clone())); }
+    if let Some(vals) = &x.value {
+        v.extend(vals.iter().map(|l| Class::LangStringTextType(l.clone())));
+    }
+    if let Some(vi) = &x.value_id {
+        v.push(Class::Reference(vi.clone()));
+    }
     v
 }
 
@@ -569,13 +650,17 @@ fn descend_annotated_relationship(x: &AnnotatedRelationshipElement) -> Vec<Class
     let mut v = collect_sme_common_vec(x);
     v.push(Class::Reference(x.first.clone()));
     v.push(Class::Reference(x.second.clone()));
-    if let Some(anns) = &x.annotations { v.extend(anns.iter().cloned()); }
+    if let Some(anns) = &x.annotations {
+        v.extend(anns.iter().cloned());
+    }
     v
 }
 
 fn descend_entity(x: &Entity) -> Vec<Class> {
     let mut v = collect_sme_common_vec(x);
-    if let Some(stmts) = &x.statements { v.extend(stmts.iter().cloned()); }
+    if let Some(stmts) = &x.statements {
+        v.extend(stmts.iter().cloned());
+    }
     if let Some(ids) = &x.specific_asset_ids {
         v.extend(ids.iter().map(|s| Class::SpecificAssetId(s.clone())));
     }
@@ -585,55 +670,103 @@ fn descend_entity(x: &Entity) -> Vec<Class> {
 fn descend_event_payload(x: &EventPayload) -> Vec<Class> {
     let mut v = Vec::new();
     v.push(Class::Reference(x.source.clone()));
-    if let Some(r) = &x.source_semantic_id { v.push(Class::Reference(r.clone())); }
+    if let Some(r) = &x.source_semantic_id {
+        v.push(Class::Reference(r.clone()));
+    }
     v.push(Class::Reference(x.observable_reference.clone()));
-    if let Some(r) = &x.observable_semantic_id { v.push(Class::Reference(r.clone())); }
-    if let Some(r) = &x.subject_id { v.push(Class::Reference(r.clone())); }
+    if let Some(r) = &x.observable_semantic_id {
+        v.push(Class::Reference(r.clone()));
+    }
+    if let Some(r) = &x.subject_id {
+        v.push(Class::Reference(r.clone()));
+    }
     v
 }
 
 fn descend_operation(x: &Operation) -> Vec<Class> {
     let mut v = collect_sme_common_vec(x);
-    if let Some(ivs) = &x.input_variables { v.extend(ivs.iter().map(|ov| Class::OperationVariable(ov.clone()))); }
-    if let Some(ovs) = &x.output_variables { v.extend(ovs.iter().map(|ov| Class::OperationVariable(ov.clone()))); }
-    if let Some(iovs) = &x.inoutput_variables { v.extend(iovs.iter().map(|ov| Class::OperationVariable(ov.clone()))); }
+    if let Some(ivs) = &x.input_variables {
+        v.extend(ivs.iter().map(|ov| Class::OperationVariable(ov.clone())));
+    }
+    if let Some(ovs) = &x.output_variables {
+        v.extend(ovs.iter().map(|ov| Class::OperationVariable(ov.clone())));
+    }
+    if let Some(iovs) = &x.inoutput_variables {
+        v.extend(iovs.iter().map(|ov| Class::OperationVariable(ov.clone())));
+    }
     v
 }
 
 fn descend_concept_description(x: &ConceptDescription) -> Vec<Class> {
     let mut v = Vec::new();
-    if let Some(exts) = &x.extensions { v.extend(exts.iter().map(|e| Class::Extension(e.clone()))); }
-    if let Some(dn) = &x.display_name { v.extend(dn.iter().map(|l| Class::LangStringNameType(l.clone()))); }
-    if let Some(desc) = &x.description { v.extend(desc.iter().map(|l| Class::LangStringTextType(l.clone()))); }
-    if let Some(adm) = &x.administration { v.push(Class::AdministrativeInformation(adm.clone())); }
-    if let Some(eds) = &x.embedded_data_specifications {
-        v.extend(eds.iter().map(|e| Class::EmbeddedDataSpecification(e.clone())));
+    if let Some(exts) = &x.extensions {
+        v.extend(exts.iter().map(|e| Class::Extension(e.clone())));
     }
-    if let Some(ico) = &x.is_case_of { v.extend(ico.iter().map(|r| Class::Reference(r.clone()))); }
+    if let Some(dn) = &x.display_name {
+        v.extend(dn.iter().map(|l| Class::LangStringNameType(l.clone())));
+    }
+    if let Some(desc) = &x.description {
+        v.extend(desc.iter().map(|l| Class::LangStringTextType(l.clone())));
+    }
+    if let Some(adm) = &x.administration {
+        v.push(Class::AdministrativeInformation(adm.clone()));
+    }
+    if let Some(eds) = &x.embedded_data_specifications {
+        v.extend(
+            eds.iter()
+                .map(|e| Class::EmbeddedDataSpecification(e.clone())),
+        );
+    }
+    if let Some(ico) = &x.is_case_of {
+        v.extend(ico.iter().map(|r| Class::Reference(r.clone())));
+    }
     v
 }
 
 fn descend_environment(x: &Environment) -> Vec<Class> {
     let mut v = Vec::new();
     if let Some(aas) = &x.asset_administration_shells {
-        v.extend(aas.iter().map(|a| Class::AssetAdministrationShell(a.clone())));
+        v.extend(
+            aas.iter()
+                .map(|a| Class::AssetAdministrationShell(a.clone())),
+        );
     }
-    if let Some(sms) = &x.submodels { v.extend(sms.iter().map(|s| Class::Submodel(s.clone()))); }
-    if let Some(cds) = &x.concept_descriptions { v.extend(cds.iter().map(|c| Class::ConceptDescription(c.clone()))); }
+    if let Some(sms) = &x.submodels {
+        v.extend(sms.iter().map(|s| Class::Submodel(s.clone())));
+    }
+    if let Some(cds) = &x.concept_descriptions {
+        v.extend(cds.iter().map(|c| Class::ConceptDescription(c.clone())));
+    }
     v
 }
 
 fn descend_data_specification_iec61360(x: &DataSpecificationIec61360) -> Vec<Class> {
     let mut v = Vec::new();
-    v.extend(x.preferred_name.iter().map(|l| Class::LangStringPreferredNameTypeIec61360(l.clone())));
+    v.extend(
+        x.preferred_name
+            .iter()
+            .map(|l| Class::LangStringPreferredNameTypeIec61360(l.clone())),
+    );
     if let Some(sn) = &x.short_name {
-        v.extend(sn.iter().map(|l| Class::LangStringShortNameTypeIec61360(l.clone())));
+        v.extend(
+            sn.iter()
+                .map(|l| Class::LangStringShortNameTypeIec61360(l.clone())),
+        );
     }
-    if let Some(uid) = &x.unit_id { v.push(Class::Reference(uid.clone())); }
+    if let Some(uid) = &x.unit_id {
+        v.push(Class::Reference(uid.clone()));
+    }
     if let Some(def) = &x.definition {
-        v.extend(def.iter().map(|l| Class::LangStringDefinitionTypeIec61360(l.clone())));
+        v.extend(
+            def.iter()
+                .map(|l| Class::LangStringDefinitionTypeIec61360(l.clone())),
+        );
     }
-    if let Some(vl) = &x.value_list { v.push(Class::ValueList(vl.clone())); }
-    if let Some(lt) = &x.level_type { v.push(Class::LevelType(lt.clone())); }
+    if let Some(vl) = &x.value_list {
+        v.push(Class::ValueList(vl.clone()));
+    }
+    if let Some(lt) = &x.level_type {
+        v.push(Class::LevelType(lt.clone()));
+    }
     v
 }

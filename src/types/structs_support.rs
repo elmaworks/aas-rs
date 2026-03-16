@@ -166,7 +166,9 @@ pub struct ValueList {
 impl ValueList {
     /// Creates a new [`ValueList`] with the given value reference pairs.
     pub fn new(value_reference_pairs: Vec<ValueReferencePair>) -> Self {
-        Self { value_reference_pairs }
+        Self {
+            value_reference_pairs,
+        }
     }
 }
 

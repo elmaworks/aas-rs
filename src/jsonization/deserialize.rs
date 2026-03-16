@@ -17,8 +17,8 @@ use crate::{
     Extension, File, Key, LangStringDefinitionTypeIec61360, LangStringNameType,
     LangStringPreferredNameTypeIec61360, LangStringShortNameTypeIec61360, LangStringTextType,
     LevelType, MultiLanguageProperty, Operation, OperationVariable, Property, Qualifier, Range,
-    Reference, ReferenceElement, RelationshipElement, Resource, SpecificAssetId,
-    SubmodelElementCollection, SubmodelElementList, Submodel, ValueList, ValueReferencePair,
+    Reference, ReferenceElement, RelationshipElement, Resource, SpecificAssetId, Submodel,
+    SubmodelElementCollection, SubmodelElementList, ValueList, ValueReferencePair,
 };
 
 use super::error::DeserializationError;
@@ -32,7 +32,7 @@ fn bool_from_jsonable(v: &Value) -> Result<bool, DeserializationError> {
 
 fn str_from_jsonable(v: &Value) -> Result<String, DeserializationError> {
     v.as_str()
-        .map(|s| s.to_owned())
+        .map(std::borrow::ToOwned::to_owned)
         .ok_or_else(|| DeserializationError::new(format!("Expected a string, but got: {v}")))
 }
 
@@ -70,9 +70,8 @@ fn qualifier_kind_from_jsonable(v: &Value) -> Result<QualifierKind, Deserializat
 
 fn asset_kind_from_jsonable(v: &Value) -> Result<AssetKind, DeserializationError> {
     let s = str_from_jsonable(v)?;
-    stringification::asset_kind_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid AssetKind literal: {s:?}"))
-    })
+    stringification::asset_kind_from_str(&s)
+        .ok_or_else(|| DeserializationError::new(format!("Not a valid AssetKind literal: {s:?}")))
 }
 
 fn aas_submodel_elements_from_jsonable(
@@ -80,24 +79,20 @@ fn aas_submodel_elements_from_jsonable(
 ) -> Result<AasSubmodelElements, DeserializationError> {
     let s = str_from_jsonable(v)?;
     stringification::aas_submodel_elements_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!(
-            "Not a valid AasSubmodelElements literal: {s:?}"
-        ))
+        DeserializationError::new(format!("Not a valid AasSubmodelElements literal: {s:?}"))
     })
 }
 
 fn entity_type_from_jsonable(v: &Value) -> Result<EntityType, DeserializationError> {
     let s = str_from_jsonable(v)?;
-    stringification::entity_type_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid EntityType literal: {s:?}"))
-    })
+    stringification::entity_type_from_str(&s)
+        .ok_or_else(|| DeserializationError::new(format!("Not a valid EntityType literal: {s:?}")))
 }
 
 fn direction_from_jsonable(v: &Value) -> Result<Direction, DeserializationError> {
     let s = str_from_jsonable(v)?;
-    stringification::direction_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid Direction literal: {s:?}"))
-    })
+    stringification::direction_from_str(&s)
+        .ok_or_else(|| DeserializationError::new(format!("Not a valid Direction literal: {s:?}")))
 }
 
 fn state_of_event_from_jsonable(v: &Value) -> Result<StateOfEvent, DeserializationError> {
@@ -116,9 +111,8 @@ fn reference_types_from_jsonable(v: &Value) -> Result<ReferenceTypes, Deserializ
 
 fn key_types_from_jsonable(v: &Value) -> Result<KeyTypes, DeserializationError> {
     let s = str_from_jsonable(v)?;
-    stringification::key_types_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid KeyTypes literal: {s:?}"))
-    })
+    stringification::key_types_from_str(&s)
+        .ok_or_else(|| DeserializationError::new(format!("Not a valid KeyTypes literal: {s:?}")))
 }
 
 fn data_type_def_xsd_from_jsonable(v: &Value) -> Result<DataTypeDefXsd, DeserializationError> {
@@ -149,24 +143,17 @@ pub fn key_from_jsonable(v: &Value) -> Result<Key, DeserializationError> {
     for (key, val) in obj {
         match key.as_str() {
             "type" => {
-                type_ = Some(
-                    key_types_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("type"))?,
-                );
+                type_ = Some(key_types_from_jsonable(val).map_err(|e| e.prepend_property("type"))?);
             }
             "value" => {
-                value = Some(
-                    str_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("value"))?,
-                );
+                value = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             _ => {}
         }
     }
 
     Ok(Key {
-        type_: type_
-            .ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
+        type_: type_.ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
         value: value
             .ok_or_else(|| DeserializationError::new("Missing required property: value"))?,
     })
@@ -186,8 +173,7 @@ pub fn reference_from_jsonable(v: &Value) -> Result<Reference, DeserializationEr
         match key.as_str() {
             "type" => {
                 type_ = Some(
-                    reference_types_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("type"))?,
+                    reference_types_from_jsonable(val).map_err(|e| e.prepend_property("type"))?,
                 );
             }
             "referredSemanticId" => {
@@ -198,8 +184,7 @@ pub fn reference_from_jsonable(v: &Value) -> Result<Reference, DeserializationEr
             }
             "keys" => {
                 let arr = val.as_array().ok_or_else(|| {
-                    DeserializationError::new("Expected an array for keys")
-                        .prepend_property("keys")
+                    DeserializationError::new("Expected an array for keys").prepend_property("keys")
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
@@ -215,11 +200,9 @@ pub fn reference_from_jsonable(v: &Value) -> Result<Reference, DeserializationEr
     }
 
     Ok(Reference {
-        type_: type_
-            .ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
+        type_: type_.ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
         referred_semantic_id,
-        keys: keys
-            .ok_or_else(|| DeserializationError::new("Missing required property: keys"))?,
+        keys: keys.ok_or_else(|| DeserializationError::new("Missing required property: keys"))?,
     })
 }
 
@@ -234,9 +217,8 @@ fn lang_string_name_type_from_jsonable(
     for (k, val) in obj {
         match k.as_str() {
             "language" => {
-                language = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?,
-                );
+                language =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?);
             }
             "text" => {
                 text = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("text"))?);
@@ -247,8 +229,7 @@ fn lang_string_name_type_from_jsonable(
     Ok(LangStringNameType {
         language: language
             .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text
-            .ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
     })
 }
 
@@ -263,9 +244,8 @@ fn lang_string_text_type_from_jsonable(
     for (k, val) in obj {
         match k.as_str() {
             "language" => {
-                language = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?,
-                );
+                language =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?);
             }
             "text" => {
                 text = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("text"))?);
@@ -276,8 +256,7 @@ fn lang_string_text_type_from_jsonable(
     Ok(LangStringTextType {
         language: language
             .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text
-            .ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
     })
 }
 
@@ -285,18 +264,15 @@ fn lang_string_preferred_name_type_iec61360_from_jsonable(
     v: &Value,
 ) -> Result<LangStringPreferredNameTypeIec61360, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new(
-            "Expected a JSON object for LangStringPreferredNameTypeIec61360",
-        )
+        DeserializationError::new("Expected a JSON object for LangStringPreferredNameTypeIec61360")
     })?;
     let mut language: Option<String> = None;
     let mut text: Option<String> = None;
     for (k, val) in obj {
         match k.as_str() {
             "language" => {
-                language = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?,
-                );
+                language =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?);
             }
             "text" => {
                 text = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("text"))?);
@@ -307,8 +283,7 @@ fn lang_string_preferred_name_type_iec61360_from_jsonable(
     Ok(LangStringPreferredNameTypeIec61360 {
         language: language
             .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text
-            .ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
     })
 }
 
@@ -316,18 +291,15 @@ fn lang_string_short_name_type_iec61360_from_jsonable(
     v: &Value,
 ) -> Result<LangStringShortNameTypeIec61360, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new(
-            "Expected a JSON object for LangStringShortNameTypeIec61360",
-        )
+        DeserializationError::new("Expected a JSON object for LangStringShortNameTypeIec61360")
     })?;
     let mut language: Option<String> = None;
     let mut text: Option<String> = None;
     for (k, val) in obj {
         match k.as_str() {
             "language" => {
-                language = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?,
-                );
+                language =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?);
             }
             "text" => {
                 text = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("text"))?);
@@ -338,8 +310,7 @@ fn lang_string_short_name_type_iec61360_from_jsonable(
     Ok(LangStringShortNameTypeIec61360 {
         language: language
             .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text
-            .ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
     })
 }
 
@@ -347,18 +318,15 @@ fn lang_string_definition_type_iec61360_from_jsonable(
     v: &Value,
 ) -> Result<LangStringDefinitionTypeIec61360, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new(
-            "Expected a JSON object for LangStringDefinitionTypeIec61360",
-        )
+        DeserializationError::new("Expected a JSON object for LangStringDefinitionTypeIec61360")
     })?;
     let mut language: Option<String> = None;
     let mut text: Option<String> = None;
     for (k, val) in obj {
         match k.as_str() {
             "language" => {
-                language = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?,
-                );
+                language =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("language"))?);
             }
             "text" => {
                 text = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("text"))?);
@@ -369,8 +337,7 @@ fn lang_string_definition_type_iec61360_from_jsonable(
     Ok(LangStringDefinitionTypeIec61360 {
         language: language
             .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text
-            .ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
     })
 }
 
@@ -383,20 +350,17 @@ fn resource_from_jsonable(v: &Value) -> Result<Resource, DeserializationError> {
     for (k, val) in obj {
         match k.as_str() {
             "path" => {
-                path =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("path"))?);
+                path = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("path"))?);
             }
             "contentType" => {
-                content_type = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("contentType"))?,
-                );
+                content_type =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("contentType"))?);
             }
             _ => {}
         }
     }
     Ok(Resource {
-        path: path
-            .ok_or_else(|| DeserializationError::new("Missing required property: path"))?,
+        path: path.ok_or_else(|| DeserializationError::new("Missing required property: path"))?,
         content_type,
     })
 }
@@ -412,20 +376,16 @@ fn level_type_from_jsonable(v: &Value) -> Result<LevelType, DeserializationError
     for (k, val) in obj {
         match k.as_str() {
             "min" => {
-                min =
-                    Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("min"))?);
+                min = Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("min"))?);
             }
             "nom" => {
-                nom =
-                    Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("nom"))?);
+                nom = Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("nom"))?);
             }
             "typ" => {
-                typ =
-                    Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("typ"))?);
+                typ = Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("typ"))?);
             }
             "max" => {
-                max =
-                    Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("max"))?);
+                max = Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("max"))?);
             }
             _ => {}
         }
@@ -449,15 +409,11 @@ fn value_reference_pair_from_jsonable(
     for (k, val) in obj {
         match k.as_str() {
             "value" => {
-                value = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?,
-                );
+                value = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             "valueId" => {
-                value_id = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("valueId"))?,
-                );
+                value_id =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("valueId"))?);
             }
             _ => {}
         }
@@ -512,16 +468,14 @@ fn extension_from_jsonable(v: &Value) -> Result<Extension, DeserializationError>
         match k.as_str() {
             "semanticId" => {
                 semantic_id = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("semanticId"))?,
+                    reference_from_jsonable(val).map_err(|e| e.prepend_property("semanticId"))?,
                 );
             }
             "supplementalSemanticIds" => {
                 supplemental_semantic_ids = Some(parse_ref_array(val, "supplementalSemanticIds")?);
             }
             "name" => {
-                name =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("name"))?);
+                name = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("name"))?);
             }
             "valueType" => {
                 value_type = Some(
@@ -530,9 +484,7 @@ fn extension_from_jsonable(v: &Value) -> Result<Extension, DeserializationError>
                 );
             }
             "value" => {
-                value = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?,
-                );
+                value = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             "refersTo" => {
                 refers_to = Some(parse_ref_array(val, "refersTo")?);
@@ -543,8 +495,7 @@ fn extension_from_jsonable(v: &Value) -> Result<Extension, DeserializationError>
     Ok(Extension {
         semantic_id,
         supplemental_semantic_ids,
-        name: name
-            .ok_or_else(|| DeserializationError::new("Missing required property: name"))?,
+        name: name.ok_or_else(|| DeserializationError::new("Missing required property: name"))?,
         value_type,
         value,
         refers_to,
@@ -566,8 +517,7 @@ fn qualifier_from_jsonable(v: &Value) -> Result<Qualifier, DeserializationError>
         match k.as_str() {
             "semanticId" => {
                 semantic_id = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("semanticId"))?,
+                    reference_from_jsonable(val).map_err(|e| e.prepend_property("semanticId"))?,
                 );
             }
             "supplementalSemanticIds" => {
@@ -575,13 +525,11 @@ fn qualifier_from_jsonable(v: &Value) -> Result<Qualifier, DeserializationError>
             }
             "kind" => {
                 kind = Some(
-                    qualifier_kind_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("kind"))?,
+                    qualifier_kind_from_jsonable(val).map_err(|e| e.prepend_property("kind"))?,
                 );
             }
             "type" => {
-                type_ =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("type"))?);
+                type_ = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("type"))?);
             }
             "valueType" => {
                 value_type = Some(
@@ -590,15 +538,11 @@ fn qualifier_from_jsonable(v: &Value) -> Result<Qualifier, DeserializationError>
                 );
             }
             "value" => {
-                value = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?,
-                );
+                value = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             "valueId" => {
-                value_id = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("valueId"))?,
-                );
+                value_id =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("valueId"))?);
             }
             _ => {}
         }
@@ -607,8 +551,7 @@ fn qualifier_from_jsonable(v: &Value) -> Result<Qualifier, DeserializationError>
         semantic_id,
         supplemental_semantic_ids,
         kind,
-        type_: type_
-            .ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
+        type_: type_.ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
         value_type: value_type
             .ok_or_else(|| DeserializationError::new("Missing required property: valueType"))?,
         value,
@@ -617,9 +560,9 @@ fn qualifier_from_jsonable(v: &Value) -> Result<Qualifier, DeserializationError>
 }
 
 fn specific_asset_id_from_jsonable(v: &Value) -> Result<SpecificAssetId, DeserializationError> {
-    let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for SpecificAssetId")
-    })?;
+    let obj = v
+        .as_object()
+        .ok_or_else(|| DeserializationError::new("Expected a JSON object for SpecificAssetId"))?;
     let mut semantic_id: Option<Reference> = None;
     let mut supplemental_semantic_ids: Option<Vec<Reference>> = None;
     let mut name: Option<String> = None;
@@ -629,21 +572,17 @@ fn specific_asset_id_from_jsonable(v: &Value) -> Result<SpecificAssetId, Deseria
         match k.as_str() {
             "semanticId" => {
                 semantic_id = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("semanticId"))?,
+                    reference_from_jsonable(val).map_err(|e| e.prepend_property("semanticId"))?,
                 );
             }
             "supplementalSemanticIds" => {
                 supplemental_semantic_ids = Some(parse_ref_array(val, "supplementalSemanticIds")?);
             }
             "name" => {
-                name =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("name"))?);
+                name = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("name"))?);
             }
             "value" => {
-                value = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?,
-                );
+                value = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             "externalSubjectId" => {
                 external_subject_id = Some(
@@ -657,8 +596,7 @@ fn specific_asset_id_from_jsonable(v: &Value) -> Result<SpecificAssetId, Deseria
     Ok(SpecificAssetId {
         semantic_id,
         supplemental_semantic_ids,
-        name: name
-            .ok_or_else(|| DeserializationError::new("Missing required property: name"))?,
+        name: name.ok_or_else(|| DeserializationError::new("Missing required property: name"))?,
         value: value
             .ok_or_else(|| DeserializationError::new("Missing required property: value"))?,
         external_subject_id,
@@ -679,29 +617,25 @@ fn administrative_information_from_jsonable(
     for (k, val) in obj {
         match k.as_str() {
             "embeddedDataSpecifications" => {
-                embedded_data_specifications =
-                    Some(parse_embedded_data_spec_array(val, "embeddedDataSpecifications")?);
+                embedded_data_specifications = Some(parse_embedded_data_spec_array(
+                    val,
+                    "embeddedDataSpecifications",
+                )?);
             }
             "version" => {
-                version = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("version"))?,
-                );
+                version = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("version"))?);
             }
             "revision" => {
-                revision = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("revision"))?,
-                );
+                revision =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("revision"))?);
             }
             "creator" => {
-                creator = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("creator"))?,
-                );
+                creator =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("creator"))?);
             }
             "templateId" => {
-                template_id = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("templateId"))?,
-                );
+                template_id =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("templateId"))?);
             }
             _ => {}
         }
@@ -732,10 +666,10 @@ fn embedded_data_specification_from_jsonable(
                 );
             }
             "dataSpecificationContent" => {
-                data_specification_content = Some(Box::new(
-                    class_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("dataSpecificationContent"))?,
-                ));
+                data_specification_content =
+                    Some(Box::new(class_from_jsonable(val).map_err(|e| {
+                        e.prepend_property("dataSpecificationContent")
+                    })?));
             }
             _ => {}
         }
@@ -799,23 +733,19 @@ fn data_specification_iec61360_from_jsonable(
                 short_name = Some(result);
             }
             "unit" => {
-                unit =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("unit"))?);
+                unit = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("unit"))?);
             }
             "unitId" => {
-                unit_id = Some(
-                    reference_from_jsonable(val).map_err(|e| e.prepend_property("unitId"))?,
-                );
+                unit_id =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("unitId"))?);
             }
             "sourceOfDefinition" => {
                 source_of_definition = Some(
-                    str_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("sourceOfDefinition"))?,
+                    str_from_jsonable(val).map_err(|e| e.prepend_property("sourceOfDefinition"))?,
                 );
             }
             "symbol" => {
-                symbol =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("symbol"))?);
+                symbol = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("symbol"))?);
             }
             "dataType" => {
                 data_type = Some(
@@ -838,34 +768,28 @@ fn data_specification_iec61360_from_jsonable(
                 definition = Some(result);
             }
             "valueFormat" => {
-                value_format = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("valueFormat"))?,
-                );
+                value_format =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("valueFormat"))?);
             }
             "valueList" => {
                 value_list = Some(
-                    value_list_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("valueList"))?,
+                    value_list_from_jsonable(val).map_err(|e| e.prepend_property("valueList"))?,
                 );
             }
             "value" => {
-                value = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?,
-                );
+                value = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             "levelType" => {
                 level_type = Some(
-                    level_type_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("levelType"))?,
+                    level_type_from_jsonable(val).map_err(|e| e.prepend_property("levelType"))?,
                 );
             }
             _ => {}
         }
     }
     Ok(DataSpecificationIec61360 {
-        preferred_name: preferred_name.ok_or_else(|| {
-            DeserializationError::new("Missing required property: preferredName")
-        })?,
+        preferred_name: preferred_name
+            .ok_or_else(|| DeserializationError::new("Missing required property: preferredName"))?,
         short_name,
         unit,
         unit_id,
@@ -882,18 +806,14 @@ fn data_specification_iec61360_from_jsonable(
 
 // ── Helper array parsers ──────────────────────────────────────────────────────
 
-fn parse_ref_array(
-    v: &Value,
-    prop: &'static str,
-) -> Result<Vec<Reference>, DeserializationError> {
+fn parse_ref_array(v: &Value, prop: &'static str) -> Result<Vec<Reference>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
         DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
         result.push(
-            reference_from_jsonable(item)
-                .map_err(|e| e.prepend_index(i).prepend_property(prop))?,
+            reference_from_jsonable(item).map_err(|e| e.prepend_index(i).prepend_property(prop))?,
         );
     }
     Ok(result)
@@ -909,8 +829,7 @@ fn parse_extension_array(
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
         result.push(
-            extension_from_jsonable(item)
-                .map_err(|e| e.prepend_index(i).prepend_property(prop))?,
+            extension_from_jsonable(item).map_err(|e| e.prepend_index(i).prepend_property(prop))?,
         );
     }
     Ok(result)
@@ -960,8 +879,7 @@ fn parse_qualifier_array(
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
         result.push(
-            qualifier_from_jsonable(item)
-                .map_err(|e| e.prepend_index(i).prepend_property(prop))?,
+            qualifier_from_jsonable(item).map_err(|e| e.prepend_index(i).prepend_property(prop))?,
         );
     }
     Ok(result)
@@ -984,18 +902,14 @@ fn parse_embedded_data_spec_array(
     Ok(result)
 }
 
-fn parse_class_array(
-    v: &Value,
-    prop: &'static str,
-) -> Result<Vec<Class>, DeserializationError> {
+fn parse_class_array(v: &Value, prop: &'static str) -> Result<Vec<Class>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
         DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
         result.push(
-            class_from_jsonable(item)
-                .map_err(|e| e.prepend_index(i).prepend_property(prop))?,
+            class_from_jsonable(item).map_err(|e| e.prepend_index(i).prepend_property(prop))?,
         );
     }
     Ok(result)
@@ -1036,9 +950,9 @@ fn parse_operation_variable_array(
 }
 
 fn operation_variable_from_jsonable(v: &Value) -> Result<OperationVariable, DeserializationError> {
-    let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for OperationVariable")
-    })?;
+    let obj = v
+        .as_object()
+        .ok_or_else(|| DeserializationError::new("Expected a JSON object for OperationVariable"))?;
     let mut value: Option<Box<Class>> = None;
     for (k, val) in obj {
         if k == "value" {
@@ -1054,9 +968,9 @@ fn operation_variable_from_jsonable(v: &Value) -> Result<OperationVariable, Dese
 }
 
 fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, DeserializationError> {
-    let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for EventPayload")
-    })?;
+    let obj = v
+        .as_object()
+        .ok_or_else(|| DeserializationError::new("Expected a JSON object for EventPayload"))?;
     let mut source: Option<Reference> = None;
     let mut source_semantic_id: Option<Reference> = None;
     let mut observable_reference: Option<Reference> = None;
@@ -1068,10 +982,8 @@ fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, Deserializatio
     for (k, val) in obj {
         match k.as_str() {
             "source" => {
-                source = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("source"))?,
-                );
+                source =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("source"))?);
             }
             "sourceSemanticId" => {
                 source_semantic_id = Some(
@@ -1092,24 +1004,20 @@ fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, Deserializatio
                 );
             }
             "topic" => {
-                topic =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("topic"))?);
+                topic = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("topic"))?);
             }
             "subjectId" => {
                 subject_id = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("subjectId"))?,
+                    reference_from_jsonable(val).map_err(|e| e.prepend_property("subjectId"))?,
                 );
             }
             "timeStamp" => {
-                time_stamp = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("timeStamp"))?,
-                );
+                time_stamp =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("timeStamp"))?);
             }
             "payload" => {
-                payload = Some(
-                    bytes_from_jsonable(val).map_err(|e| e.prepend_property("payload"))?,
-                );
+                payload =
+                    Some(bytes_from_jsonable(val).map_err(|e| e.prepend_property("payload"))?);
             }
             _ => {}
         }
@@ -1124,9 +1032,8 @@ fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, Deserializatio
         observable_semantic_id,
         topic,
         subject_id,
-        time_stamp: time_stamp.ok_or_else(|| {
-            DeserializationError::new("Missing required property: timeStamp")
-        })?,
+        time_stamp: time_stamp
+            .ok_or_else(|| DeserializationError::new("Missing required property: timeStamp"))?,
         payload,
     })
 }
@@ -1134,9 +1041,9 @@ fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, Deserializatio
 // ── Core struct parsers ───────────────────────────────────────────────────────
 
 fn asset_information_from_jsonable(v: &Value) -> Result<AssetInformation, DeserializationError> {
-    let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for AssetInformation")
-    })?;
+    let obj = v
+        .as_object()
+        .ok_or_else(|| DeserializationError::new("Expected a JSON object for AssetInformation"))?;
     let mut asset_kind: Option<AssetKind> = None;
     let mut global_asset_id: Option<String> = None;
     let mut specific_asset_ids: Option<Vec<SpecificAssetId>> = None;
@@ -1146,23 +1053,19 @@ fn asset_information_from_jsonable(v: &Value) -> Result<AssetInformation, Deseri
         match k.as_str() {
             "assetKind" => {
                 asset_kind = Some(
-                    asset_kind_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("assetKind"))?,
+                    asset_kind_from_jsonable(val).map_err(|e| e.prepend_property("assetKind"))?,
                 );
             }
             "globalAssetId" => {
-                global_asset_id = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("globalAssetId"))?,
-                );
+                global_asset_id =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("globalAssetId"))?);
             }
             "specificAssetIds" => {
-                specific_asset_ids =
-                    Some(parse_specific_asset_id_array(val, "specificAssetIds")?);
+                specific_asset_ids = Some(parse_specific_asset_id_array(val, "specificAssetIds")?);
             }
             "assetType" => {
-                asset_type = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("assetType"))?,
-                );
+                asset_type =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("assetType"))?);
             }
             "defaultThumbnail" => {
                 default_thumbnail = Some(
@@ -1174,9 +1077,8 @@ fn asset_information_from_jsonable(v: &Value) -> Result<AssetInformation, Deseri
         }
     }
     Ok(AssetInformation {
-        asset_kind: asset_kind.ok_or_else(|| {
-            DeserializationError::new("Missing required property: assetKind")
-        })?,
+        asset_kind: asset_kind
+            .ok_or_else(|| DeserializationError::new("Missing required property: assetKind"))?,
         global_asset_id,
         specific_asset_ids,
         asset_type,
@@ -1207,14 +1109,11 @@ fn asset_administration_shell_from_jsonable(
                 extensions = Some(parse_extension_array(val, "extensions")?);
             }
             "category" => {
-                category = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("category"))?,
-                );
+                category =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("category"))?);
             }
             "idShort" => {
-                id_short = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("idShort"))?,
-                );
+                id_short = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("idShort"))?);
             }
             "displayName" => {
                 display_name = Some(parse_lang_name_array(val, "displayName")?);
@@ -1232,13 +1131,14 @@ fn asset_administration_shell_from_jsonable(
                 id = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("id"))?);
             }
             "embeddedDataSpecifications" => {
-                embedded_data_specifications =
-                    Some(parse_embedded_data_spec_array(val, "embeddedDataSpecifications")?);
+                embedded_data_specifications = Some(parse_embedded_data_spec_array(
+                    val,
+                    "embeddedDataSpecifications",
+                )?);
             }
             "derivedFrom" => {
                 derived_from = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("derivedFrom"))?,
+                    reference_from_jsonable(val).map_err(|e| e.prepend_property("derivedFrom"))?,
                 );
             }
             "assetInformation" => {
@@ -1293,14 +1193,11 @@ fn submodel_from_jsonable(v: &Value) -> Result<Submodel, DeserializationError> {
                 extensions = Some(parse_extension_array(val, "extensions")?);
             }
             "category" => {
-                category = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("category"))?,
-                );
+                category =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("category"))?);
             }
             "idShort" => {
-                id_short = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("idShort"))?,
-                );
+                id_short = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("idShort"))?);
             }
             "displayName" => {
                 display_name = Some(parse_lang_name_array(val, "displayName")?);
@@ -1319,14 +1216,12 @@ fn submodel_from_jsonable(v: &Value) -> Result<Submodel, DeserializationError> {
             }
             "kind" => {
                 kind = Some(
-                    modelling_kind_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("kind"))?,
+                    modelling_kind_from_jsonable(val).map_err(|e| e.prepend_property("kind"))?,
                 );
             }
             "semanticId" => {
                 semantic_id = Some(
-                    reference_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("semanticId"))?,
+                    reference_from_jsonable(val).map_err(|e| e.prepend_property("semanticId"))?,
                 );
             }
             "supplementalSemanticIds" => {
@@ -1336,8 +1231,10 @@ fn submodel_from_jsonable(v: &Value) -> Result<Submodel, DeserializationError> {
                 qualifiers = Some(parse_qualifier_array(val, "qualifiers")?);
             }
             "embeddedDataSpecifications" => {
-                embedded_data_specifications =
-                    Some(parse_embedded_data_spec_array(val, "embeddedDataSpecifications")?);
+                embedded_data_specifications = Some(parse_embedded_data_spec_array(
+                    val,
+                    "embeddedDataSpecifications",
+                )?);
             }
             "submodelElements" => {
                 submodel_elements = Some(parse_class_array(val, "submodelElements")?);
@@ -1383,14 +1280,11 @@ fn concept_description_from_jsonable(
                 extensions = Some(parse_extension_array(val, "extensions")?);
             }
             "category" => {
-                category = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("category"))?,
-                );
+                category =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("category"))?);
             }
             "idShort" => {
-                id_short = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("idShort"))?,
-                );
+                id_short = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("idShort"))?);
             }
             "displayName" => {
                 display_name = Some(parse_lang_name_array(val, "displayName")?);
@@ -1408,8 +1302,10 @@ fn concept_description_from_jsonable(
                 id = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("id"))?);
             }
             "embeddedDataSpecifications" => {
-                embedded_data_specifications =
-                    Some(parse_embedded_data_spec_array(val, "embeddedDataSpecifications")?);
+                embedded_data_specifications = Some(parse_embedded_data_spec_array(
+                    val,
+                    "embeddedDataSpecifications",
+                )?);
             }
             "isCaseOf" => {
                 is_case_of = Some(parse_ref_array(val, "isCaseOf")?);
@@ -1431,9 +1327,9 @@ fn concept_description_from_jsonable(
 }
 
 fn environment_from_jsonable(v: &Value) -> Result<Environment, DeserializationError> {
-    let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for Environment")
-    })?;
+    let obj = v
+        .as_object()
+        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Environment"))?;
     let mut asset_administration_shells: Option<Vec<AssetAdministrationShell>> = None;
     let mut submodels: Option<Vec<Submodel>> = None;
     let mut concept_descriptions: Option<Vec<ConceptDescription>> = None;
@@ -1446,11 +1342,10 @@ fn environment_from_jsonable(v: &Value) -> Result<Environment, DeserializationEr
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
-                    result.push(
-                        asset_administration_shell_from_jsonable(item).map_err(|e| {
-                            e.prepend_index(i).prepend_property("assetAdministrationShells")
-                        })?,
-                    );
+                    result.push(asset_administration_shell_from_jsonable(item).map_err(|e| {
+                        e.prepend_index(i)
+                            .prepend_property("assetAdministrationShells")
+                    })?);
                 }
                 asset_administration_shells = Some(result);
             }
@@ -1536,9 +1431,8 @@ fn parse_sme_common_field(
             Ok(true)
         }
         "semanticId" => {
-            fields.semantic_id = Some(
-                reference_from_jsonable(val).map_err(|e| e.prepend_property("semanticId"))?,
-            );
+            fields.semantic_id =
+                Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("semanticId"))?);
             Ok(true)
         }
         "supplementalSemanticIds" => {
@@ -1551,8 +1445,10 @@ fn parse_sme_common_field(
             Ok(true)
         }
         "embeddedDataSpecifications" => {
-            fields.embedded_data_specifications =
-                Some(parse_embedded_data_spec_array(val, "embeddedDataSpecifications")?);
+            fields.embedded_data_specifications = Some(parse_embedded_data_spec_array(
+                val,
+                "embeddedDataSpecifications",
+            )?);
             Ok(true)
         }
         _ => Ok(false),
@@ -1595,13 +1491,11 @@ fn property_from_jsonable(v: &Value) -> Result<Property, DeserializationError> {
                 );
             }
             "value" => {
-                value =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
+                value = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             "valueId" => {
-                value_id = Some(
-                    reference_from_jsonable(val).map_err(|e| e.prepend_property("valueId"))?,
-                );
+                value_id =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("valueId"))?);
             }
             _ => {}
         }
@@ -1616,9 +1510,8 @@ fn property_from_jsonable(v: &Value) -> Result<Property, DeserializationError> {
         supplemental_semantic_ids: sme.supplemental_semantic_ids,
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
-        value_type: value_type.ok_or_else(|| {
-            DeserializationError::new("Missing required property: valueType")
-        })?,
+        value_type: value_type
+            .ok_or_else(|| DeserializationError::new("Missing required property: valueType"))?,
         value,
         value_id,
     })
@@ -1642,9 +1535,8 @@ fn multi_language_property_from_jsonable(
                 value = Some(parse_lang_text_array(val, "value")?);
             }
             "valueId" => {
-                value_id = Some(
-                    reference_from_jsonable(val).map_err(|e| e.prepend_property("valueId"))?,
-                );
+                value_id =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("valueId"))?);
             }
             _ => {}
         }
@@ -1702,18 +1594,17 @@ fn range_from_jsonable(v: &Value) -> Result<Range, DeserializationError> {
         supplemental_semantic_ids: sme.supplemental_semantic_ids,
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
-        value_type: value_type.ok_or_else(|| {
-            DeserializationError::new("Missing required property: valueType")
-        })?,
+        value_type: value_type
+            .ok_or_else(|| DeserializationError::new("Missing required property: valueType"))?,
         min,
         max,
     })
 }
 
 fn reference_element_from_jsonable(v: &Value) -> Result<ReferenceElement, DeserializationError> {
-    let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for ReferenceElement")
-    })?;
+    let obj = v
+        .as_object()
+        .ok_or_else(|| DeserializationError::new("Expected a JSON object for ReferenceElement"))?;
     let mut sme = new_sme_fields();
     let mut value: Option<Reference> = None;
     for (k, val) in obj {
@@ -1721,9 +1612,7 @@ fn reference_element_from_jsonable(v: &Value) -> Result<ReferenceElement, Deseri
             continue;
         }
         if k == "value" {
-            value = Some(
-                reference_from_jsonable(val).map_err(|e| e.prepend_property("value"))?,
-            );
+            value = Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
         }
     }
     Ok(ReferenceElement {
@@ -1753,13 +1642,11 @@ fn blob_from_jsonable(v: &Value) -> Result<Blob, DeserializationError> {
         }
         match k.as_str() {
             "value" => {
-                value =
-                    Some(bytes_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
+                value = Some(bytes_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             "contentType" => {
-                content_type = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("contentType"))?,
-                );
+                content_type =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("contentType"))?);
             }
             _ => {}
         }
@@ -1775,9 +1662,8 @@ fn blob_from_jsonable(v: &Value) -> Result<Blob, DeserializationError> {
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
         value,
-        content_type: content_type.ok_or_else(|| {
-            DeserializationError::new("Missing required property: contentType")
-        })?,
+        content_type: content_type
+            .ok_or_else(|| DeserializationError::new("Missing required property: contentType"))?,
     })
 }
 
@@ -1794,13 +1680,11 @@ fn file_from_jsonable(v: &Value) -> Result<File, DeserializationError> {
         }
         match k.as_str() {
             "value" => {
-                value =
-                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
+                value = Some(str_from_jsonable(val).map_err(|e| e.prepend_property("value"))?);
             }
             "contentType" => {
-                content_type = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("contentType"))?,
-                );
+                content_type =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("contentType"))?);
             }
             _ => {}
         }
@@ -1816,9 +1700,8 @@ fn file_from_jsonable(v: &Value) -> Result<File, DeserializationError> {
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
         value,
-        content_type: content_type.ok_or_else(|| {
-            DeserializationError::new("Missing required property: contentType")
-        })?,
+        content_type: content_type
+            .ok_or_else(|| DeserializationError::new("Missing required property: contentType"))?,
     })
 }
 
@@ -1837,14 +1720,12 @@ fn relationship_element_from_jsonable(
         }
         match k.as_str() {
             "first" => {
-                first = Some(
-                    reference_from_jsonable(val).map_err(|e| e.prepend_property("first"))?,
-                );
+                first =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("first"))?);
             }
             "second" => {
-                second = Some(
-                    reference_from_jsonable(val).map_err(|e| e.prepend_property("second"))?,
-                );
+                second =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("second"))?);
             }
             _ => {}
         }
@@ -1882,14 +1763,12 @@ fn annotated_relationship_element_from_jsonable(
         }
         match k.as_str() {
             "first" => {
-                first = Some(
-                    reference_from_jsonable(val).map_err(|e| e.prepend_property("first"))?,
-                );
+                first =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("first"))?);
             }
             "second" => {
-                second = Some(
-                    reference_from_jsonable(val).map_err(|e| e.prepend_property("second"))?,
-                );
+                second =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("second"))?);
             }
             "annotations" => {
                 annotations = Some(parse_class_array(val, "annotations")?);
@@ -1933,9 +1812,8 @@ fn submodel_element_list_from_jsonable(
         }
         match k.as_str() {
             "orderRelevant" => {
-                order_relevant = Some(
-                    bool_from_jsonable(val).map_err(|e| e.prepend_property("orderRelevant"))?,
-                );
+                order_relevant =
+                    Some(bool_from_jsonable(val).map_err(|e| e.prepend_property("orderRelevant"))?);
             }
             "semanticIdListElement" => {
                 semantic_id_list_element = Some(
@@ -2030,18 +1908,15 @@ fn entity_from_jsonable(v: &Value) -> Result<Entity, DeserializationError> {
             }
             "entityType" => {
                 entity_type = Some(
-                    entity_type_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("entityType"))?,
+                    entity_type_from_jsonable(val).map_err(|e| e.prepend_property("entityType"))?,
                 );
             }
             "globalAssetId" => {
-                global_asset_id = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("globalAssetId"))?,
-                );
+                global_asset_id =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("globalAssetId"))?);
             }
             "specificAssetIds" => {
-                specific_asset_ids =
-                    Some(parse_specific_asset_id_array(val, "specificAssetIds")?);
+                specific_asset_ids = Some(parse_specific_asset_id_array(val, "specificAssetIds")?);
             }
             _ => {}
         }
@@ -2057,20 +1932,17 @@ fn entity_from_jsonable(v: &Value) -> Result<Entity, DeserializationError> {
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
         statements,
-        entity_type: entity_type.ok_or_else(|| {
-            DeserializationError::new("Missing required property: entityType")
-        })?,
+        entity_type: entity_type
+            .ok_or_else(|| DeserializationError::new("Missing required property: entityType"))?,
         global_asset_id,
         specific_asset_ids,
     })
 }
 
-fn basic_event_element_from_jsonable(
-    v: &Value,
-) -> Result<BasicEventElement, DeserializationError> {
-    let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for BasicEventElement")
-    })?;
+fn basic_event_element_from_jsonable(v: &Value) -> Result<BasicEventElement, DeserializationError> {
+    let obj = v
+        .as_object()
+        .ok_or_else(|| DeserializationError::new("Expected a JSON object for BasicEventElement"))?;
     let mut sme = new_sme_fields();
     let mut observed: Option<Reference> = None;
     let mut direction: Option<Direction> = None;
@@ -2086,26 +1958,22 @@ fn basic_event_element_from_jsonable(
         }
         match k.as_str() {
             "observed" => {
-                observed = Some(
-                    reference_from_jsonable(val).map_err(|e| e.prepend_property("observed"))?,
-                );
+                observed =
+                    Some(reference_from_jsonable(val).map_err(|e| e.prepend_property("observed"))?);
             }
             "direction" => {
                 direction = Some(
-                    direction_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("direction"))?,
+                    direction_from_jsonable(val).map_err(|e| e.prepend_property("direction"))?,
                 );
             }
             "state" => {
                 state = Some(
-                    state_of_event_from_jsonable(val)
-                        .map_err(|e| e.prepend_property("state"))?,
+                    state_of_event_from_jsonable(val).map_err(|e| e.prepend_property("state"))?,
                 );
             }
             "messageTopic" => {
-                message_topic = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("messageTopic"))?,
-                );
+                message_topic =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("messageTopic"))?);
             }
             "messageBroker" => {
                 message_broker = Some(
@@ -2114,19 +1982,16 @@ fn basic_event_element_from_jsonable(
                 );
             }
             "lastUpdate" => {
-                last_update = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("lastUpdate"))?,
-                );
+                last_update =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("lastUpdate"))?);
             }
             "minInterval" => {
-                min_interval = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("minInterval"))?,
-                );
+                min_interval =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("minInterval"))?);
             }
             "maxInterval" => {
-                max_interval = Some(
-                    str_from_jsonable(val).map_err(|e| e.prepend_property("maxInterval"))?,
-                );
+                max_interval =
+                    Some(str_from_jsonable(val).map_err(|e| e.prepend_property("maxInterval"))?);
             }
             _ => {}
         }
@@ -2141,15 +2006,12 @@ fn basic_event_element_from_jsonable(
         supplemental_semantic_ids: sme.supplemental_semantic_ids,
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
-        observed: observed.ok_or_else(|| {
-            DeserializationError::new("Missing required property: observed")
-        })?,
-        direction: direction.ok_or_else(|| {
-            DeserializationError::new("Missing required property: direction")
-        })?,
-        state: state.ok_or_else(|| {
-            DeserializationError::new("Missing required property: state")
-        })?,
+        observed: observed
+            .ok_or_else(|| DeserializationError::new("Missing required property: observed"))?,
+        direction: direction
+            .ok_or_else(|| DeserializationError::new("Missing required property: direction"))?,
+        state: state
+            .ok_or_else(|| DeserializationError::new("Missing required property: state"))?,
         message_topic,
         message_broker,
         last_update,
@@ -2175,8 +2037,7 @@ fn operation_from_jsonable(v: &Value) -> Result<Operation, DeserializationError>
                 input_variables = Some(parse_operation_variable_array(val, "inputVariables")?);
             }
             "outputVariables" => {
-                output_variables =
-                    Some(parse_operation_variable_array(val, "outputVariables")?);
+                output_variables = Some(parse_operation_variable_array(val, "outputVariables")?);
             }
             "inoutputVariables" => {
                 inoutput_variables =
@@ -2231,9 +2092,9 @@ pub fn class_from_jsonable(v: &Value) -> Result<Class, DeserializationError> {
     let obj = v
         .as_object()
         .ok_or_else(|| DeserializationError::new("Expected a JSON object for Class"))?;
-    let model_type_val = obj.get("modelType").ok_or_else(|| {
-        DeserializationError::new("Missing required property: modelType")
-    })?;
+    let model_type_val = obj
+        .get("modelType")
+        .ok_or_else(|| DeserializationError::new("Missing required property: modelType"))?;
     let model_type_str = model_type_val
         .as_str()
         .ok_or_else(|| DeserializationError::new("Expected a string for modelType"))?;
@@ -2269,8 +2130,7 @@ pub fn class_from_jsonable(v: &Value) -> Result<Class, DeserializationError> {
         "Blob" => blob_from_jsonable(v).map(Class::Blob),
         "File" => file_from_jsonable(v).map(Class::File),
         "AnnotatedRelationshipElement" => {
-            annotated_relationship_element_from_jsonable(v)
-                .map(Class::AnnotatedRelationshipElement)
+            annotated_relationship_element_from_jsonable(v).map(Class::AnnotatedRelationshipElement)
         }
         "Entity" => entity_from_jsonable(v).map(Class::Entity),
         "EventPayload" => event_payload_from_jsonable(v).map(Class::EventPayload),
@@ -2278,9 +2138,7 @@ pub fn class_from_jsonable(v: &Value) -> Result<Class, DeserializationError> {
         "Operation" => operation_from_jsonable(v).map(Class::Operation),
         "OperationVariable" => operation_variable_from_jsonable(v).map(Class::OperationVariable),
         "Capability" => capability_from_jsonable(v).map(Class::Capability),
-        "ConceptDescription" => {
-            concept_description_from_jsonable(v).map(Class::ConceptDescription)
-        }
+        "ConceptDescription" => concept_description_from_jsonable(v).map(Class::ConceptDescription),
         "Reference" => reference_from_jsonable(v).map(Class::Reference),
         "Key" => key_from_jsonable(v).map(Class::Key),
         "LangStringNameType" => {
@@ -2294,20 +2152,18 @@ pub fn class_from_jsonable(v: &Value) -> Result<Class, DeserializationError> {
             embedded_data_specification_from_jsonable(v).map(Class::EmbeddedDataSpecification)
         }
         "LevelType" => level_type_from_jsonable(v).map(Class::LevelType),
-        "ValueReferencePair" => value_reference_pair_from_jsonable(v).map(Class::ValueReferencePair),
+        "ValueReferencePair" => {
+            value_reference_pair_from_jsonable(v).map(Class::ValueReferencePair)
+        }
         "ValueList" => value_list_from_jsonable(v).map(Class::ValueList),
         "LangStringPreferredNameTypeIec61360" => {
             lang_string_preferred_name_type_iec61360_from_jsonable(v)
                 .map(Class::LangStringPreferredNameTypeIec61360)
         }
-        "LangStringShortNameTypeIec61360" => {
-            lang_string_short_name_type_iec61360_from_jsonable(v)
-                .map(Class::LangStringShortNameTypeIec61360)
-        }
-        "LangStringDefinitionTypeIec61360" => {
-            lang_string_definition_type_iec61360_from_jsonable(v)
-                .map(Class::LangStringDefinitionTypeIec61360)
-        }
+        "LangStringShortNameTypeIec61360" => lang_string_short_name_type_iec61360_from_jsonable(v)
+            .map(Class::LangStringShortNameTypeIec61360),
+        "LangStringDefinitionTypeIec61360" => lang_string_definition_type_iec61360_from_jsonable(v)
+            .map(Class::LangStringDefinitionTypeIec61360),
         "DataSpecificationIec61360" => {
             data_specification_iec61360_from_jsonable(v).map(Class::DataSpecificationIec61360)
         }

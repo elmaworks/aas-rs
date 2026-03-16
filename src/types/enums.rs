@@ -264,7 +264,12 @@ pub fn over_qualifier_kind() -> impl Iterator<Item = QualifierKind> {
 
 /// Returns an iterator over all [`AssetKind`] literals.
 pub fn over_asset_kind() -> impl Iterator<Item = AssetKind> {
-    [AssetKind::Type, AssetKind::Instance, AssetKind::NotApplicable].into_iter()
+    [
+        AssetKind::Type,
+        AssetKind::Instance,
+        AssetKind::NotApplicable,
+    ]
+    .into_iter()
 }
 
 /// Returns an iterator over all [`AasSubmodelElements`] literals.
@@ -308,7 +313,11 @@ pub fn over_state_of_event() -> impl Iterator<Item = StateOfEvent> {
 
 /// Returns an iterator over all [`ReferenceTypes`] literals.
 pub fn over_reference_types() -> impl Iterator<Item = ReferenceTypes> {
-    [ReferenceTypes::ExternalReference, ReferenceTypes::ModelReference].into_iter()
+    [
+        ReferenceTypes::ExternalReference,
+        ReferenceTypes::ModelReference,
+    ]
+    .into_iter()
 }
 
 /// Returns an iterator over all [`KeyTypes`] literals.

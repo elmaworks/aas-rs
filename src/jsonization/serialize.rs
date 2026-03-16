@@ -13,8 +13,8 @@ use crate::{
     Extension, File, Key, LangStringDefinitionTypeIec61360, LangStringNameType,
     LangStringPreferredNameTypeIec61360, LangStringShortNameTypeIec61360, LangStringTextType,
     LevelType, MultiLanguageProperty, Operation, OperationVariable, Property, Qualifier, Range,
-    Reference, ReferenceElement, RelationshipElement, Resource, SpecificAssetId,
-    Submodel, SubmodelElementCollection, SubmodelElementList, ValueList, ValueReferencePair,
+    Reference, ReferenceElement, RelationshipElement, Resource, SpecificAssetId, Submodel,
+    SubmodelElementCollection, SubmodelElementList, ValueList, ValueReferencePair,
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -23,9 +23,7 @@ fn serialize_reference(r: &Reference) -> Value {
     let mut m = Map::new();
     m.insert(
         "type".to_owned(),
-        Value::String(
-            stringification::must_reference_types_to_str(r.type_).to_owned(),
-        ),
+        Value::String(stringification::must_reference_types_to_str(r.type_).to_owned()),
     );
     if let Some(rsi) = &r.referred_semantic_id {
         m.insert("referredSemanticId".to_owned(), serialize_reference(rsi));
@@ -59,9 +57,7 @@ fn serialize_lang_string_text(l: &LangStringTextType) -> Value {
     Value::Object(m)
 }
 
-fn serialize_lang_string_preferred_name_iec61360(
-    l: &LangStringPreferredNameTypeIec61360,
-) -> Value {
+fn serialize_lang_string_preferred_name_iec61360(l: &LangStringPreferredNameTypeIec61360) -> Value {
     let mut m = Map::new();
     m.insert("language".to_owned(), Value::String(l.language.clone()));
     m.insert("text".to_owned(), Value::String(l.text.clone()));
@@ -133,9 +129,7 @@ fn serialize_extension(ext: &Extension) -> Value {
     if let Some(vt) = ext.value_type {
         m.insert(
             "valueType".to_owned(),
-            Value::String(
-                stringification::must_data_type_def_xsd_to_str(vt).to_owned(),
-            ),
+            Value::String(stringification::must_data_type_def_xsd_to_str(vt).to_owned()),
         );
     }
     if let Some(v) = &ext.value {
@@ -170,9 +164,7 @@ fn serialize_qualifier(q: &Qualifier) -> Value {
     m.insert("type".to_owned(), Value::String(q.type_.clone()));
     m.insert(
         "valueType".to_owned(),
-        Value::String(
-            stringification::must_data_type_def_xsd_to_str(q.value_type).to_owned(),
-        ),
+        Value::String(stringification::must_data_type_def_xsd_to_str(q.value_type).to_owned()),
     );
     if let Some(v) = &q.value {
         m.insert("value".to_owned(), Value::String(v.clone()));
@@ -207,7 +199,11 @@ fn serialize_administrative_information(a: &AdministrativeInformation) -> Value 
     if let Some(eds) = &a.embedded_data_specifications {
         m.insert(
             "embeddedDataSpecifications".to_owned(),
-            Value::Array(eds.iter().map(serialize_embedded_data_specification).collect()),
+            Value::Array(
+                eds.iter()
+                    .map(serialize_embedded_data_specification)
+                    .collect(),
+            ),
         );
     }
     if let Some(v) = &a.version {
@@ -252,7 +248,11 @@ fn serialize_data_specification_iec61360(d: &DataSpecificationIec61360) -> Value
     if let Some(sn) = &d.short_name {
         m.insert(
             "shortName".to_owned(),
-            Value::Array(sn.iter().map(serialize_lang_string_short_name_iec61360).collect()),
+            Value::Array(
+                sn.iter()
+                    .map(serialize_lang_string_short_name_iec61360)
+                    .collect(),
+            ),
         );
     }
     if let Some(u) = &d.unit {
@@ -270,9 +270,7 @@ fn serialize_data_specification_iec61360(d: &DataSpecificationIec61360) -> Value
     if let Some(dt) = d.data_type {
         m.insert(
             "dataType".to_owned(),
-            Value::String(
-                stringification::must_data_type_iec_61360_to_str(dt).to_owned(),
-            ),
+            Value::String(stringification::must_data_type_iec_61360_to_str(dt).to_owned()),
         );
     }
     if let Some(def) = &d.definition {
@@ -360,7 +358,11 @@ fn insert_sme_common_fields(
     if let Some(eds) = embedded_data_specifications {
         m.insert(
             "embeddedDataSpecifications".to_owned(),
-            Value::Array(eds.iter().map(serialize_embedded_data_specification).collect()),
+            Value::Array(
+                eds.iter()
+                    .map(serialize_embedded_data_specification)
+                    .collect(),
+            ),
         );
     }
 }
@@ -406,7 +408,10 @@ fn serialize_asset_administration_shell(a: &AssetAdministrationShell) -> Value {
         &a.embedded_data_specifications,
     );
     if let Some(adm) = &a.administration {
-        m.insert("administration".to_owned(), serialize_administrative_information(adm));
+        m.insert(
+            "administration".to_owned(),
+            serialize_administrative_information(adm),
+        );
     }
     m.insert("id".to_owned(), Value::String(a.id.clone()));
     if let Some(df) = &a.derived_from {
@@ -444,7 +449,10 @@ fn serialize_submodel(s: &Submodel) -> Value {
         &s.embedded_data_specifications,
     );
     if let Some(adm) = &s.administration {
-        m.insert("administration".to_owned(), serialize_administrative_information(adm));
+        m.insert(
+            "administration".to_owned(),
+            serialize_administrative_information(adm),
+        );
     }
     m.insert("id".to_owned(), Value::String(s.id.clone()));
     if let Some(k) = s.kind {
@@ -478,7 +486,10 @@ fn serialize_concept_description(c: &ConceptDescription) -> Value {
         &c.embedded_data_specifications,
     );
     if let Some(adm) = &c.administration {
-        m.insert("administration".to_owned(), serialize_administrative_information(adm));
+        m.insert(
+            "administration".to_owned(),
+            serialize_administrative_information(adm),
+        );
     }
     m.insert("id".to_owned(), Value::String(c.id.clone()));
     if let Some(ico) = &c.is_case_of {
@@ -499,7 +510,11 @@ fn serialize_environment(e: &Environment) -> Value {
     if let Some(aas) = &e.asset_administration_shells {
         m.insert(
             "assetAdministrationShells".to_owned(),
-            Value::Array(aas.iter().map(serialize_asset_administration_shell).collect()),
+            Value::Array(
+                aas.iter()
+                    .map(serialize_asset_administration_shell)
+                    .collect(),
+            ),
         );
     }
     if let Some(sms) = &e.submodels {
@@ -578,9 +593,7 @@ fn serialize_property(p: &Property) -> Value {
     );
     m.insert(
         "valueType".to_owned(),
-        Value::String(
-            stringification::must_data_type_def_xsd_to_str(p.value_type).to_owned(),
-        ),
+        Value::String(stringification::must_data_type_def_xsd_to_str(p.value_type).to_owned()),
     );
     if let Some(v) = &p.value {
         m.insert("value".to_owned(), Value::String(v.clone()));
@@ -638,9 +651,7 @@ fn serialize_range(r: &Range) -> Value {
     );
     m.insert(
         "valueType".to_owned(),
-        Value::String(
-            stringification::must_data_type_def_xsd_to_str(r.value_type).to_owned(),
-        ),
+        Value::String(stringification::must_data_type_def_xsd_to_str(r.value_type).to_owned()),
     );
     if let Some(min) = &r.min {
         m.insert("min".to_owned(), Value::String(min.clone()));
@@ -696,7 +707,10 @@ fn serialize_blob(b: &Blob) -> Value {
             Value::String(crate::common::base64_encode(v)),
         );
     }
-    m.insert("contentType".to_owned(), Value::String(b.content_type.clone()));
+    m.insert(
+        "contentType".to_owned(),
+        Value::String(b.content_type.clone()),
+    );
     m.insert("modelType".to_owned(), Value::String("Blob".to_owned()));
     Value::Object(m)
 }
@@ -718,7 +732,10 @@ fn serialize_file(f: &File) -> Value {
     if let Some(v) = &f.value {
         m.insert("value".to_owned(), Value::String(v.clone()));
     }
-    m.insert("contentType".to_owned(), Value::String(f.content_type.clone()));
+    m.insert(
+        "contentType".to_owned(),
+        Value::String(f.content_type.clone()),
+    );
     m.insert("modelType".to_owned(), Value::String("File".to_owned()));
     Value::Object(m)
 }
@@ -793,7 +810,10 @@ fn serialize_submodel_element_list(sel: &SubmodelElementList) -> Value {
         m.insert("orderRelevant".to_owned(), Value::Bool(or));
     }
     if let Some(sile) = &sel.semantic_id_list_element {
-        m.insert("semanticIdListElement".to_owned(), serialize_reference(sile));
+        m.insert(
+            "semanticIdListElement".to_owned(),
+            serialize_reference(sile),
+        );
     }
     m.insert(
         "typeValueListElement".to_owned(),
@@ -805,9 +825,7 @@ fn serialize_submodel_element_list(sel: &SubmodelElementList) -> Value {
     if let Some(vtl) = sel.value_type_list_element {
         m.insert(
             "valueTypeListElement".to_owned(),
-            Value::String(
-                stringification::must_data_type_def_xsd_to_str(vtl).to_owned(),
-            ),
+            Value::String(stringification::must_data_type_def_xsd_to_str(vtl).to_owned()),
         );
     }
     if let Some(vals) = &sel.value {
@@ -1041,10 +1059,7 @@ pub fn to_jsonable(value: &Class) -> Value {
         Class::Resource(x) => {
             let mut v = serialize_resource(x);
             if let Value::Object(m) = &mut v {
-                m.insert(
-                    "modelType".to_owned(),
-                    Value::String("Resource".to_owned()),
-                );
+                m.insert("modelType".to_owned(), Value::String("Resource".to_owned()));
             }
             v
         }

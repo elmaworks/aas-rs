@@ -170,33 +170,30 @@ pub static DATA_TYPE_IEC_61360_FOR_PROPERTY_OR_VALUE: Lazy<HashSet<DataTypeIec61
     });
 
 /// IEC 61360 data types for concept descriptions categorized with REFERENCE.
-pub static DATA_TYPE_IEC_61360_FOR_REFERENCE: Lazy<HashSet<DataTypeIec61360>> =
-    Lazy::new(|| {
-        let mut s = HashSet::new();
-        s.insert(DataTypeIec61360::String);
-        s.insert(DataTypeIec61360::Iri);
-        s.insert(DataTypeIec61360::Irdi);
-        s
-    });
+pub static DATA_TYPE_IEC_61360_FOR_REFERENCE: Lazy<HashSet<DataTypeIec61360>> = Lazy::new(|| {
+    let mut s = HashSet::new();
+    s.insert(DataTypeIec61360::String);
+    s.insert(DataTypeIec61360::Iri);
+    s.insert(DataTypeIec61360::Irdi);
+    s
+});
 
 /// IEC 61360 data types for concept descriptions categorized with DOCUMENT.
-pub static DATA_TYPE_IEC_61360_FOR_DOCUMENT: Lazy<HashSet<DataTypeIec61360>> =
-    Lazy::new(|| {
-        let mut s = HashSet::new();
-        s.insert(DataTypeIec61360::File);
-        s.insert(DataTypeIec61360::Blob);
-        s.insert(DataTypeIec61360::Html);
-        s
-    });
+pub static DATA_TYPE_IEC_61360_FOR_DOCUMENT: Lazy<HashSet<DataTypeIec61360>> = Lazy::new(|| {
+    let mut s = HashSet::new();
+    s.insert(DataTypeIec61360::File);
+    s.insert(DataTypeIec61360::Blob);
+    s.insert(DataTypeIec61360::Html);
+    s
+});
 
 /// IEC 61360 data types that imply a unit defined in the data specification.
-pub static IEC_61360_DATA_TYPES_WITH_UNIT: Lazy<HashSet<DataTypeIec61360>> =
-    Lazy::new(|| {
-        let mut s = HashSet::new();
-        s.insert(DataTypeIec61360::IntegerMeasure);
-        s.insert(DataTypeIec61360::RealMeasure);
-        s.insert(DataTypeIec61360::RationalMeasure);
-        s.insert(DataTypeIec61360::IntegerCurrency);
-        s.insert(DataTypeIec61360::RealCurrency);
-        s
-    });
+pub static IEC_61360_DATA_TYPES_WITH_UNIT: Lazy<HashSet<DataTypeIec61360>> = Lazy::new(|| {
+    let mut s = HashSet::new();
+    s.insert(DataTypeIec61360::IntegerMeasure);
+    s.insert(DataTypeIec61360::RealMeasure);
+    s.insert(DataTypeIec61360::RationalMeasure);
+    s.insert(DataTypeIec61360::IntegerCurrency);
+    s.insert(DataTypeIec61360::RealCurrency);
+    s
+});

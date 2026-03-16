@@ -1,7 +1,7 @@
 //! JSON serialization and deserialization for AAS classes.
 
-pub mod error;
 mod deserialize;
+pub mod error;
 mod serialize;
 
 pub use deserialize::*;
