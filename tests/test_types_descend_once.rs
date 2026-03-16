@@ -146,6 +146,17 @@ descend_once_test!(
 );
 
 #[test]
+fn test_descend_once_environment() {
+    let instance = common::load_maximal_environment();
+    let got = common::descend_once_trace(&instance);
+    let golden_path = common::test_data_dir()
+        .join("descendOnce")
+        .join("Environment")
+        .join("maximal.json.trace");
+    common::assert_trace_eq(&got, &golden_path);
+}
+
+#[test]
 fn test_descend_once_event_payload() {
     let path = common::test_data_dir()
         .join("Json")

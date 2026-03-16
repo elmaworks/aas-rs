@@ -443,3 +443,18 @@ iface_test!(
     "IEventElement",
     "BasicEventElement"
 );
+
+// IDataSpecificationContent
+iface_test!(
+    test_idata_specification_content_data_specification_iec61360,
+    "IDataSpecificationContent",
+    "DataSpecificationIec61360"
+);
+
+// Deserialization fail: non-object input to class_from_jsonable
+#[test]
+fn test_class_deserialization_fail() {
+    let jsonable = serde_json::Value::String("This is not a JSON object.".to_string());
+    let err = jsonization::class_from_jsonable(&jsonable).unwrap_err();
+    assert_eq!(err.to_string(), "Expected a JSON object, but got: string");
+}
