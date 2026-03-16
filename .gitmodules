@@ -1,0 +1,3 @@
+[submodule "aas-core3.0-typescript"]
+	path = aas-core3.0-typescript
+	url = https://github.com/aas-core-works/aas-core3.0-typescript.git
