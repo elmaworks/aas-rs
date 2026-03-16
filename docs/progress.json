@@ -44,7 +44,7 @@
       "id": 3,
       "name": "constants + stringification",
       "description": "Implement 13 constant HashSets in constants/mod.rs and enum<->string conversion functions in stringification/mod.rs",
-      "status": "pending",
+      "status": "completed",
       "files": [
         "src/constants/mod.rs",
         "src/stringification/mod.rs"
