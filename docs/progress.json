@@ -1,0 +1,105 @@
+{
+  "phases": [
+    {
+      "id": 0,
+      "name": "Documentation Update",
+      "description": "Add test requirements section to docs/ARCHITECTURE.md",
+      "status": "completed",
+      "files": [
+        "docs/ARCHITECTURE.md"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "Foundation — common + enums + Cargo.toml",
+      "description": "Add dependencies to Cargo.toml, implement common/mod.rs (base64 encode/decode), and define all 12 enums in types/enums.rs",
+      "status": "completed",
+      "files": [
+        "Cargo.toml",
+        "Cargo.lock",
+        "src/common/mod.rs",
+        "src/types/enums.rs"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "types module core — traits, structs, Class enum, visitor/transformer, descend",
+      "description": "Implement all 38 concrete structs, Class enum, visitor/transformer traits, type guards, and descend/descend_once iterators",
+      "status": "completed",
+      "files": [
+        "src/lib.rs",
+        "src/types/mod.rs",
+        "src/types/enums.rs",
+        "src/types/structs_lang.rs",
+        "src/types/structs_support.rs",
+        "src/types/structs_elements.rs",
+        "src/types/structs_core.rs",
+        "src/types/class.rs",
+        "src/types/visitor.rs",
+        "src/types/transformer.rs",
+        "src/types/type_guards.rs"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "constants + stringification",
+      "description": "Implement 13 constant HashSets in constants/mod.rs and enum<->string conversion functions in stringification/mod.rs",
+      "status": "pending",
+      "files": [
+        "src/constants/mod.rs",
+        "src/stringification/mod.rs"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "jsonization",
+      "description": "Implement JSON serialization and deserialization for all AAS types",
+      "status": "pending",
+      "files": [
+        "src/jsonization/mod.rs",
+        "src/jsonization/error.rs",
+        "src/jsonization/deserialize.rs",
+        "src/jsonization/serialize.rs"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "verification",
+      "description": "Implement AAS instance constraint verification",
+      "status": "pending",
+      "files": [
+        "src/verification/mod.rs",
+        "src/verification/error.rs",
+        "src/verification/pattern.rs",
+        "src/verification/value.rs",
+        "src/verification/rules.rs",
+        "src/verification/string_constraints.rs",
+        "src/verification/verifier.rs"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Testing",
+      "description": "Implement all Rust tests satisfying the corresponding TypeScript test suite",
+      "status": "pending",
+      "files": [
+        "tests/test_common_base64.rs",
+        "tests/test_common_base64url.rs",
+        "tests/test_types_casts.rs",
+        "tests/test_types_descend_and_pass_through_visitor.rs",
+        "tests/test_types_descend_once.rs",
+        "tests/test_types_model_type.rs",
+        "tests/test_types_over_enum.rs",
+        "tests/test_types_over_x_or_empty.rs",
+        "tests/test_types_type_matches.rs",
+        "tests/test_types_x_or_default.rs",
+        "tests/test_jsonization_concrete_classes.rs",
+        "tests/test_jsonization_concrete_classes_outside_container.rs",
+        "tests/test_jsonization_enums.rs",
+        "tests/test_jsonization_interfaces.rs",
+        "tests/test_verification_date.rs",
+        "tests/test_examples.rs"
+      ]
+    }
+  ]
+}
