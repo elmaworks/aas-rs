@@ -1,6 +1,8 @@
 #![deny(warnings)]
 #![warn(clippy::all)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::must_use_candidate)]
+#![allow(clippy::missing_errors_doc)]
 #![allow(unused_imports)]
 
 pub mod common;
