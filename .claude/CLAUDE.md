@@ -19,4 +19,5 @@ This is a project to translate an AAS library written in TypeScript into Rust.
 
 - Important rules and things: @docs/IMPORTANT.md
 - Project architecture: @docs/ARCHITECTURE.md
-- Knowledge Book: @docs/KNOWLEDGE.md
+- Knowledge book: @docs/KNOWLEDGE.md
+- Working progression: @docs/progress.json

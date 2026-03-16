@@ -9,10 +9,6 @@ The project structure follows the structure of the project being translated.
 - @aas-core3.0-typescript/src/types.ts -> @src/types/
 - @aas-core3.0-typescript/src/verification.ts -> @src/verification/
 
-All tests are stored in @tests/, and test data is sourced from the following directory.
-
-- @aas-core3.0-typescript/test_data -> @test_data/
-
 ## Test Requirements
 
 All Rust tests must satisfy the corresponding TypeScript tests from `@aas-core3.0-typescript/test/`.
@@ -35,3 +31,7 @@ All Rust tests must satisfy the corresponding TypeScript tests from `@aas-core3.
 | `types.typeMatches.spec.ts`                           | `tests/test_types_type_matches.rs`                             |
 | `types.xOrDefault.spec.ts`                            | `tests/test_types_x_or_default.rs`                             |
 | `verification.date.spec.ts`                           | `tests/test_verification_date.rs`                              |
+
+All tests are stored in @tests/, and test data is sourced from the following directory.
+
+- @aas-core3.0-typescript/test_data -> @test_data/
