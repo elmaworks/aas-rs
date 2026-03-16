@@ -938,7 +938,7 @@ fn verify_submodel_element_list(
     if let Some(vals) = &that.value {
         if !vals.iter().all(|e| get_id_short_class(e).is_none()) {
             errors.push(VerificationError::new(
-                "Constraint AASd-120: ID-short of submodel elements being a direct child of a Submodel element list shall not be specified.",
+                "Constraint AASd-120: ID-short of submodel elements being a direct child of a  Submodel element list shall not be specified.",
             ));
         }
     }
@@ -1198,17 +1198,17 @@ fn verify_range(that: &Range, recurse: bool) -> Vec<VerificationError> {
             ));
         }
     }
-    if let Some(min) = &that.min {
-        if !value_consistent_with_xsd_type(min, that.value_type) {
-            errors.push(VerificationError::new(
-                "Minimum must be consistent with the value type.",
-            ));
-        }
-    }
     if let Some(max) = &that.max {
         if !value_consistent_with_xsd_type(max, that.value_type) {
             errors.push(VerificationError::new(
-                "Maximum must be consistent with the value type.",
+                "Max must be consistent with the value type.",
+            ));
+        }
+    }
+    if let Some(min) = &that.min {
+        if !value_consistent_with_xsd_type(min, that.value_type) {
+            errors.push(VerificationError::new(
+                "Min must be consistent with the value type.",
             ));
         }
     }
@@ -1980,7 +1980,7 @@ fn verify_reference(that: &Reference, recurse: bool) -> Vec<VerificationError> {
         ));
     }
 
-    let (c121, c122, c123, c124, c125, c126, c127) = reference_keys_valid(that);
+    let (c121, c122, c123, c124, c125, c126, c127, c128) = reference_keys_valid(that);
     if !c121 {
         errors.push(VerificationError::new(
             "Constraint AASd-121: For References the value of type of the first key of keys shall be one of Globally Identifiables.",
@@ -2008,12 +2008,17 @@ fn verify_reference(that: &Reference, recurse: bool) -> Vec<VerificationError> {
     }
     if !c126 {
         errors.push(VerificationError::new(
-            "Constraint AASd-126: For model references with more than one key in keys the value of type of the last key in keys shall be one of Fragment Keys.",
+            "Constraint AASd-126: For model references with more than one key in keys the value of type of the last key in the reference key chain may be one of Generic Fragment Keys or no key at all shall have a value out of Generic Fragment Keys.",
         ));
     }
     if !c127 {
         errors.push(VerificationError::new(
-            "Constraint AASd-127: For model references the value of type of the last key of keys shall be one of AAS Referables or one of Generic Fragment Keys.",
+            "Constraint AASd-127: For model references, with more than one key in keys a key with type Fragment Reference shall be preceded by a key with type File or Blob.",
+        ));
+    }
+    if !c128 {
+        errors.push(VerificationError::new(
+            "Constraint AASd-128: For model references, the value of a key preceded by a key with type Submodel element list is an integer number denoting the position in the array of the submodel element list.",
         ));
     }
 

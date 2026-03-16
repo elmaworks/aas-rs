@@ -26,37 +26,107 @@ use super::error::DeserializationError;
 // ── Primitive helpers ─────────────────────────────────────────────────────────
 
 fn bool_from_jsonable(v: &Value) -> Result<bool, DeserializationError> {
-    v.as_bool()
-        .ok_or_else(|| DeserializationError::new(format!("Expected a boolean, but got: {v}")))
+    v.as_bool().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a boolean, but got null")
+        } else {
+            DeserializationError::new(format!("Expected a boolean, but got {}", json_type_name(v)))
+        }
+    })
 }
 
 fn str_from_jsonable(v: &Value) -> Result<String, DeserializationError> {
     v.as_str()
         .map(std::borrow::ToOwned::to_owned)
-        .ok_or_else(|| DeserializationError::new(format!("Expected a string, but got: {v}")))
+        .ok_or_else(|| {
+            if v.is_null() {
+                DeserializationError::new("Expected a string, but got null")
+            } else {
+                DeserializationError::new(format!(
+                    "Expected a string, but got: {}",
+                    json_type_name(v)
+                ))
+            }
+        })
+}
+
+/// Parse a string from a JSON value for enum dispatch.
+///
+/// Unlike [`str_from_jsonable`], null values produce `"but got: object"` to match
+/// TypeScript's `typeof null === "object"` behavior.
+fn enum_str_from_jsonable(v: &Value) -> Result<String, DeserializationError> {
+    v.as_str()
+        .map(std::borrow::ToOwned::to_owned)
+        .ok_or_else(|| {
+            // TypeScript's typeof null === "object", so report "object" for both null and object types
+            let type_name = if v.is_null() {
+                "object"
+            } else {
+                json_type_name(v)
+            };
+            DeserializationError::new(format!("Expected a string, but got: {type_name}"))
+        })
 }
 
 fn bytes_from_jsonable(v: &Value) -> Result<Vec<u8>, DeserializationError> {
-    let s = str_from_jsonable(v)?;
-    crate::common::base64_decode(&s)
+    if v.is_null() {
+        return Err(DeserializationError::new(
+            "Expected a base64-encoded string, but got null",
+        ));
+    }
+    let s = v.as_str().ok_or_else(|| {
+        DeserializationError::new(format!(
+            "Expected a base64-encoded string, but got: {}",
+            json_type_name(v)
+        ))
+    })?;
+    crate::common::base64_decode(s)
         .map_err(|e| DeserializationError::new(format!("Invalid base64 encoding: {e}")))
 }
 
 fn int64_from_jsonable(v: &Value) -> Result<i64, DeserializationError> {
-    v.as_i64()
-        .ok_or_else(|| DeserializationError::new(format!("Expected an integer, but got: {v}")))
+    v.as_i64().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected an integer, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected an integer, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })
 }
 
 fn float64_from_jsonable(v: &Value) -> Result<f64, DeserializationError> {
-    v.as_f64()
-        .ok_or_else(|| DeserializationError::new(format!("Expected a float, but got: {v}")))
+    v.as_f64().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a float, but got null")
+        } else {
+            DeserializationError::new(format!("Expected a float, but got: {}", json_type_name(v)))
+        }
+    })
+}
+
+/// Returns the JSON type name for error messages.
+///
+/// Note: TypeScript's `typeof [] === "object"`, so arrays map to `"object"`.
+/// Null is handled separately (TypeScript shows "null" as a separate type in these messages).
+fn json_type_name(v: &Value) -> &'static str {
+    match v {
+        Value::Null => "null",
+        Value::Bool(_) => "boolean",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "object",
+        Value::Object(_) => "object",
+    }
 }
 
 // ── Enum helpers ──────────────────────────────────────────────────────────────
 
 /// Deserialize a [`ModellingKind`] from a JSON value.
 pub fn modelling_kind_from_jsonable(v: &Value) -> Result<ModellingKind, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::modelling_kind_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of ModellingKind: {s}"
@@ -66,7 +136,7 @@ pub fn modelling_kind_from_jsonable(v: &Value) -> Result<ModellingKind, Deserial
 
 /// Deserialize a [`QualifierKind`] from a JSON value.
 pub fn qualifier_kind_from_jsonable(v: &Value) -> Result<QualifierKind, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::qualifier_kind_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of QualifierKind: {s}"
@@ -76,7 +146,7 @@ pub fn qualifier_kind_from_jsonable(v: &Value) -> Result<QualifierKind, Deserial
 
 /// Deserialize an [`AssetKind`] from a JSON value.
 pub fn asset_kind_from_jsonable(v: &Value) -> Result<AssetKind, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::asset_kind_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of AssetKind: {s}"
@@ -88,7 +158,7 @@ pub fn asset_kind_from_jsonable(v: &Value) -> Result<AssetKind, DeserializationE
 pub fn aas_submodel_elements_from_jsonable(
     v: &Value,
 ) -> Result<AasSubmodelElements, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::aas_submodel_elements_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of AasSubmodelElements: {s}"
@@ -98,7 +168,7 @@ pub fn aas_submodel_elements_from_jsonable(
 
 /// Deserialize an [`EntityType`] from a JSON value.
 pub fn entity_type_from_jsonable(v: &Value) -> Result<EntityType, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::entity_type_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of EntityType: {s}"
@@ -108,7 +178,7 @@ pub fn entity_type_from_jsonable(v: &Value) -> Result<EntityType, Deserializatio
 
 /// Deserialize a [`Direction`] from a JSON value.
 pub fn direction_from_jsonable(v: &Value) -> Result<Direction, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::direction_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of Direction: {s}"
@@ -118,7 +188,7 @@ pub fn direction_from_jsonable(v: &Value) -> Result<Direction, DeserializationEr
 
 /// Deserialize a [`StateOfEvent`] from a JSON value.
 pub fn state_of_event_from_jsonable(v: &Value) -> Result<StateOfEvent, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::state_of_event_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of StateOfEvent: {s}"
@@ -128,7 +198,7 @@ pub fn state_of_event_from_jsonable(v: &Value) -> Result<StateOfEvent, Deseriali
 
 /// Deserialize a [`ReferenceTypes`] from a JSON value.
 pub fn reference_types_from_jsonable(v: &Value) -> Result<ReferenceTypes, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::reference_types_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of ReferenceTypes: {s}"
@@ -138,7 +208,7 @@ pub fn reference_types_from_jsonable(v: &Value) -> Result<ReferenceTypes, Deseri
 
 /// Deserialize a [`KeyTypes`] from a JSON value.
 pub fn key_types_from_jsonable(v: &Value) -> Result<KeyTypes, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::key_types_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of KeyTypes: {s}"
@@ -148,7 +218,7 @@ pub fn key_types_from_jsonable(v: &Value) -> Result<KeyTypes, DeserializationErr
 
 /// Deserialize a [`DataTypeDefXsd`] from a JSON value.
 pub fn data_type_def_xsd_from_jsonable(v: &Value) -> Result<DataTypeDefXsd, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::data_type_def_xsd_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of DataTypeDefXsd: {s}"
@@ -160,7 +230,7 @@ pub fn data_type_def_xsd_from_jsonable(v: &Value) -> Result<DataTypeDefXsd, Dese
 pub fn data_type_iec61360_from_jsonable(
     v: &Value,
 ) -> Result<DataTypeIec61360, DeserializationError> {
-    let s = str_from_jsonable(v)?;
+    let s = enum_str_from_jsonable(v)?;
     stringification::data_type_iec_61360_from_str(&s).ok_or_else(|| {
         DeserializationError::new(format!(
             "Not a valid string representation of a literal of DataTypeIec61360: {s}"
@@ -177,9 +247,16 @@ fn data_type_iec_61360_from_jsonable(v: &Value) -> Result<DataTypeIec61360, Dese
 
 /// Deserialize a [`Key`] from a JSON value.
 pub fn key_from_jsonable(v: &Value) -> Result<Key, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Key"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
 
     let mut type_: Option<KeyTypes> = None;
     let mut value: Option<String> = None;
@@ -197,17 +274,25 @@ pub fn key_from_jsonable(v: &Value) -> Result<Key, DeserializationError> {
     }
 
     Ok(Key {
-        type_: type_.ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
+        type_: type_
+            .ok_or_else(|| DeserializationError::new("The required property 'type' is missing"))?,
         value: value
-            .ok_or_else(|| DeserializationError::new("Missing required property: value"))?,
+            .ok_or_else(|| DeserializationError::new("The required property 'value' is missing"))?,
     })
 }
 
 /// Deserialize a [`Reference`] from a JSON value.
 pub fn reference_from_jsonable(v: &Value) -> Result<Reference, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Reference"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
 
     let mut type_: Option<ReferenceTypes> = None;
     let mut referred_semantic_id: Option<Box<Reference>> = None;
@@ -228,7 +313,12 @@ pub fn reference_from_jsonable(v: &Value) -> Result<Reference, DeserializationEr
             }
             "keys" => {
                 let arr = val.as_array().ok_or_else(|| {
-                    DeserializationError::new("Expected an array for keys").prepend_property("keys")
+                    let msg = if val.is_null() {
+                        "Expected an iterable, but got null".to_string()
+                    } else {
+                        format!("Expected an iterable, but got: {}", json_type_name(val))
+                    };
+                    DeserializationError::new(msg).prepend_property("keys")
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
@@ -244,9 +334,11 @@ pub fn reference_from_jsonable(v: &Value) -> Result<Reference, DeserializationEr
     }
 
     Ok(Reference {
-        type_: type_.ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
+        type_: type_
+            .ok_or_else(|| DeserializationError::new("The required property 'type' is missing"))?,
         referred_semantic_id,
-        keys: keys.ok_or_else(|| DeserializationError::new("Missing required property: keys"))?,
+        keys: keys
+            .ok_or_else(|| DeserializationError::new("The required property 'keys' is missing"))?,
     })
 }
 
@@ -254,7 +346,14 @@ fn lang_string_name_type_from_jsonable(
     v: &Value,
 ) -> Result<LangStringNameType, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for LangStringNameType")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut language: Option<String> = None;
     let mut text: Option<String> = None;
@@ -271,9 +370,11 @@ fn lang_string_name_type_from_jsonable(
         }
     }
     Ok(LangStringNameType {
-        language: language
-            .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        language: language.ok_or_else(|| {
+            DeserializationError::new("The required property 'language' is missing")
+        })?,
+        text: text
+            .ok_or_else(|| DeserializationError::new("The required property 'text' is missing"))?,
     })
 }
 
@@ -281,7 +382,14 @@ fn lang_string_text_type_from_jsonable(
     v: &Value,
 ) -> Result<LangStringTextType, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for LangStringTextType")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut language: Option<String> = None;
     let mut text: Option<String> = None;
@@ -298,9 +406,11 @@ fn lang_string_text_type_from_jsonable(
         }
     }
     Ok(LangStringTextType {
-        language: language
-            .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        language: language.ok_or_else(|| {
+            DeserializationError::new("The required property 'language' is missing")
+        })?,
+        text: text
+            .ok_or_else(|| DeserializationError::new("The required property 'text' is missing"))?,
     })
 }
 
@@ -308,7 +418,14 @@ fn lang_string_preferred_name_type_iec61360_from_jsonable(
     v: &Value,
 ) -> Result<LangStringPreferredNameTypeIec61360, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for LangStringPreferredNameTypeIec61360")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut language: Option<String> = None;
     let mut text: Option<String> = None;
@@ -325,9 +442,11 @@ fn lang_string_preferred_name_type_iec61360_from_jsonable(
         }
     }
     Ok(LangStringPreferredNameTypeIec61360 {
-        language: language
-            .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        language: language.ok_or_else(|| {
+            DeserializationError::new("The required property 'language' is missing")
+        })?,
+        text: text
+            .ok_or_else(|| DeserializationError::new("The required property 'text' is missing"))?,
     })
 }
 
@@ -335,7 +454,14 @@ fn lang_string_short_name_type_iec61360_from_jsonable(
     v: &Value,
 ) -> Result<LangStringShortNameTypeIec61360, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for LangStringShortNameTypeIec61360")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut language: Option<String> = None;
     let mut text: Option<String> = None;
@@ -352,9 +478,11 @@ fn lang_string_short_name_type_iec61360_from_jsonable(
         }
     }
     Ok(LangStringShortNameTypeIec61360 {
-        language: language
-            .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        language: language.ok_or_else(|| {
+            DeserializationError::new("The required property 'language' is missing")
+        })?,
+        text: text
+            .ok_or_else(|| DeserializationError::new("The required property 'text' is missing"))?,
     })
 }
 
@@ -362,7 +490,14 @@ fn lang_string_definition_type_iec61360_from_jsonable(
     v: &Value,
 ) -> Result<LangStringDefinitionTypeIec61360, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for LangStringDefinitionTypeIec61360")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut language: Option<String> = None;
     let mut text: Option<String> = None;
@@ -379,16 +514,25 @@ fn lang_string_definition_type_iec61360_from_jsonable(
         }
     }
     Ok(LangStringDefinitionTypeIec61360 {
-        language: language
-            .ok_or_else(|| DeserializationError::new("Missing required property: language"))?,
-        text: text.ok_or_else(|| DeserializationError::new("Missing required property: text"))?,
+        language: language.ok_or_else(|| {
+            DeserializationError::new("The required property 'language' is missing")
+        })?,
+        text: text
+            .ok_or_else(|| DeserializationError::new("The required property 'text' is missing"))?,
     })
 }
 
 fn resource_from_jsonable(v: &Value) -> Result<Resource, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Resource"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut path: Option<String> = None;
     let mut content_type: Option<String> = None;
     for (k, val) in obj {
@@ -404,15 +548,23 @@ fn resource_from_jsonable(v: &Value) -> Result<Resource, DeserializationError> {
         }
     }
     Ok(Resource {
-        path: path.ok_or_else(|| DeserializationError::new("Missing required property: path"))?,
+        path: path
+            .ok_or_else(|| DeserializationError::new("The required property 'path' is missing"))?,
         content_type,
     })
 }
 
 fn level_type_from_jsonable(v: &Value) -> Result<LevelType, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for LevelType"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut min: Option<bool> = None;
     let mut nom: Option<bool> = None;
     let mut typ: Option<bool> = None;
@@ -435,10 +587,14 @@ fn level_type_from_jsonable(v: &Value) -> Result<LevelType, DeserializationError
         }
     }
     Ok(LevelType {
-        min: min.ok_or_else(|| DeserializationError::new("Missing required property: min"))?,
-        nom: nom.ok_or_else(|| DeserializationError::new("Missing required property: nom"))?,
-        typ: typ.ok_or_else(|| DeserializationError::new("Missing required property: typ"))?,
-        max: max.ok_or_else(|| DeserializationError::new("Missing required property: max"))?,
+        min: min
+            .ok_or_else(|| DeserializationError::new("The required property 'min' is missing"))?,
+        nom: nom
+            .ok_or_else(|| DeserializationError::new("The required property 'nom' is missing"))?,
+        typ: typ
+            .ok_or_else(|| DeserializationError::new("The required property 'typ' is missing"))?,
+        max: max
+            .ok_or_else(|| DeserializationError::new("The required property 'max' is missing"))?,
     })
 }
 
@@ -446,7 +602,14 @@ fn value_reference_pair_from_jsonable(
     v: &Value,
 ) -> Result<ValueReferencePair, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for ValueReferencePair")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut value: Option<String> = None;
     let mut value_id: Option<Reference> = None;
@@ -464,22 +627,34 @@ fn value_reference_pair_from_jsonable(
     }
     Ok(ValueReferencePair {
         value: value
-            .ok_or_else(|| DeserializationError::new("Missing required property: value"))?,
-        value_id: value_id
-            .ok_or_else(|| DeserializationError::new("Missing required property: valueId"))?,
+            .ok_or_else(|| DeserializationError::new("The required property 'value' is missing"))?,
+        value_id: value_id.ok_or_else(|| {
+            DeserializationError::new("The required property 'valueId' is missing")
+        })?,
     })
 }
 
 fn value_list_from_jsonable(v: &Value) -> Result<ValueList, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for ValueList"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut value_reference_pairs: Option<Vec<ValueReferencePair>> = None;
     for (k, val) in obj {
         if k == "valueReferencePairs" {
             let arr = val.as_array().ok_or_else(|| {
-                DeserializationError::new("Expected an array for valueReferencePairs")
-                    .prepend_property("valueReferencePairs")
+                let msg = if val.is_null() {
+                    "Expected an iterable, but got null".to_string()
+                } else {
+                    format!("Expected an iterable, but got: {}", json_type_name(val))
+                };
+                DeserializationError::new(msg).prepend_property("valueReferencePairs")
             })?;
             let mut result = Vec::with_capacity(arr.len());
             for (i, item) in arr.iter().enumerate() {
@@ -493,15 +668,22 @@ fn value_list_from_jsonable(v: &Value) -> Result<ValueList, DeserializationError
     }
     Ok(ValueList {
         value_reference_pairs: value_reference_pairs.ok_or_else(|| {
-            DeserializationError::new("Missing required property: valueReferencePairs")
+            DeserializationError::new("The required property 'valueReferencePairs' is missing")
         })?,
     })
 }
 
 fn extension_from_jsonable(v: &Value) -> Result<Extension, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Extension"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut semantic_id: Option<Reference> = None;
     let mut supplemental_semantic_ids: Option<Vec<Reference>> = None;
     let mut name: Option<String> = None;
@@ -539,7 +721,8 @@ fn extension_from_jsonable(v: &Value) -> Result<Extension, DeserializationError>
     Ok(Extension {
         semantic_id,
         supplemental_semantic_ids,
-        name: name.ok_or_else(|| DeserializationError::new("Missing required property: name"))?,
+        name: name
+            .ok_or_else(|| DeserializationError::new("The required property 'name' is missing"))?,
         value_type,
         value,
         refers_to,
@@ -547,9 +730,16 @@ fn extension_from_jsonable(v: &Value) -> Result<Extension, DeserializationError>
 }
 
 fn qualifier_from_jsonable(v: &Value) -> Result<Qualifier, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Qualifier"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut semantic_id: Option<Reference> = None;
     let mut supplemental_semantic_ids: Option<Vec<Reference>> = None;
     let mut kind: Option<QualifierKind> = None;
@@ -595,18 +785,27 @@ fn qualifier_from_jsonable(v: &Value) -> Result<Qualifier, DeserializationError>
         semantic_id,
         supplemental_semantic_ids,
         kind,
-        type_: type_.ok_or_else(|| DeserializationError::new("Missing required property: type"))?,
-        value_type: value_type
-            .ok_or_else(|| DeserializationError::new("Missing required property: valueType"))?,
+        type_: type_
+            .ok_or_else(|| DeserializationError::new("The required property 'type' is missing"))?,
+        value_type: value_type.ok_or_else(|| {
+            DeserializationError::new("The required property 'valueType' is missing")
+        })?,
         value,
         value_id,
     })
 }
 
 fn specific_asset_id_from_jsonable(v: &Value) -> Result<SpecificAssetId, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for SpecificAssetId"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut semantic_id: Option<Reference> = None;
     let mut supplemental_semantic_ids: Option<Vec<Reference>> = None;
     let mut name: Option<String> = None;
@@ -640,9 +839,10 @@ fn specific_asset_id_from_jsonable(v: &Value) -> Result<SpecificAssetId, Deseria
     Ok(SpecificAssetId {
         semantic_id,
         supplemental_semantic_ids,
-        name: name.ok_or_else(|| DeserializationError::new("Missing required property: name"))?,
+        name: name
+            .ok_or_else(|| DeserializationError::new("The required property 'name' is missing"))?,
         value: value
-            .ok_or_else(|| DeserializationError::new("Missing required property: value"))?,
+            .ok_or_else(|| DeserializationError::new("The required property 'value' is missing"))?,
         external_subject_id,
     })
 }
@@ -651,7 +851,14 @@ fn administrative_information_from_jsonable(
     v: &Value,
 ) -> Result<AdministrativeInformation, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for AdministrativeInformation")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut embedded_data_specifications: Option<Vec<EmbeddedDataSpecification>> = None;
     let mut version: Option<String> = None;
@@ -697,7 +904,14 @@ fn embedded_data_specification_from_jsonable(
     v: &Value,
 ) -> Result<EmbeddedDataSpecification, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for EmbeddedDataSpecification")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut data_specification: Option<Reference> = None;
     let mut data_specification_content: Option<Box<Class>> = None;
@@ -710,20 +924,20 @@ fn embedded_data_specification_from_jsonable(
                 );
             }
             "dataSpecificationContent" => {
-                data_specification_content =
-                    Some(Box::new(class_from_jsonable(val).map_err(|e| {
-                        e.prepend_property("dataSpecificationContent")
-                    })?));
+                data_specification_content = Some(Box::new(
+                    data_spec_content_from_jsonable(val)
+                        .map_err(|e| e.prepend_property("dataSpecificationContent"))?,
+                ));
             }
             _ => {}
         }
     }
     Ok(EmbeddedDataSpecification {
         data_specification: data_specification.ok_or_else(|| {
-            DeserializationError::new("Missing required property: dataSpecification")
+            DeserializationError::new("The required property 'dataSpecification' is missing")
         })?,
         data_specification_content: data_specification_content.ok_or_else(|| {
-            DeserializationError::new("Missing required property: dataSpecificationContent")
+            DeserializationError::new("The required property 'dataSpecificationContent' is missing")
         })?,
     })
 }
@@ -732,7 +946,14 @@ fn data_specification_iec61360_from_jsonable(
     v: &Value,
 ) -> Result<DataSpecificationIec61360, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for DataSpecificationIec61360")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut preferred_name: Option<Vec<LangStringPreferredNameTypeIec61360>> = None;
     let mut short_name: Option<Vec<LangStringShortNameTypeIec61360>> = None;
@@ -750,8 +971,12 @@ fn data_specification_iec61360_from_jsonable(
         match k.as_str() {
             "preferredName" => {
                 let arr = val.as_array().ok_or_else(|| {
-                    DeserializationError::new("Expected array for preferredName")
-                        .prepend_property("preferredName")
+                    let msg = if val.is_null() {
+                        "Expected an iterable, but got null".to_string()
+                    } else {
+                        format!("Expected an iterable, but got: {}", json_type_name(val))
+                    };
+                    DeserializationError::new(msg).prepend_property("preferredName")
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
@@ -764,8 +989,12 @@ fn data_specification_iec61360_from_jsonable(
             }
             "shortName" => {
                 let arr = val.as_array().ok_or_else(|| {
-                    DeserializationError::new("Expected array for shortName")
-                        .prepend_property("shortName")
+                    let msg = if val.is_null() {
+                        "Expected an iterable, but got null".to_string()
+                    } else {
+                        format!("Expected an iterable, but got: {}", json_type_name(val))
+                    };
+                    DeserializationError::new(msg).prepend_property("shortName")
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
@@ -799,8 +1028,12 @@ fn data_specification_iec61360_from_jsonable(
             }
             "definition" => {
                 let arr = val.as_array().ok_or_else(|| {
-                    DeserializationError::new("Expected array for definition")
-                        .prepend_property("definition")
+                    let msg = if val.is_null() {
+                        "Expected an iterable, but got null".to_string()
+                    } else {
+                        format!("Expected an iterable, but got: {}", json_type_name(val))
+                    };
+                    DeserializationError::new(msg).prepend_property("definition")
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
@@ -832,8 +1065,9 @@ fn data_specification_iec61360_from_jsonable(
         }
     }
     Ok(DataSpecificationIec61360 {
-        preferred_name: preferred_name
-            .ok_or_else(|| DeserializationError::new("Missing required property: preferredName"))?,
+        preferred_name: preferred_name.ok_or_else(|| {
+            DeserializationError::new("The required property 'preferredName' is missing")
+        })?,
         short_name,
         unit,
         unit_id,
@@ -852,7 +1086,12 @@ fn data_specification_iec61360_from_jsonable(
 
 fn parse_ref_array(v: &Value, prop: &'static str) -> Result<Vec<Reference>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -868,7 +1107,12 @@ fn parse_extension_array(
     prop: &'static str,
 ) -> Result<Vec<Extension>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -884,7 +1128,12 @@ fn parse_lang_name_array(
     prop: &'static str,
 ) -> Result<Vec<LangStringNameType>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -901,7 +1150,12 @@ fn parse_lang_text_array(
     prop: &'static str,
 ) -> Result<Vec<LangStringTextType>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -918,7 +1172,12 @@ fn parse_qualifier_array(
     prop: &'static str,
 ) -> Result<Vec<Qualifier>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -934,7 +1193,12 @@ fn parse_embedded_data_spec_array(
     prop: &'static str,
 ) -> Result<Vec<EmbeddedDataSpecification>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -948,7 +1212,12 @@ fn parse_embedded_data_spec_array(
 
 fn parse_class_array(v: &Value, prop: &'static str) -> Result<Vec<Class>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -964,7 +1233,12 @@ fn parse_specific_asset_id_array(
     prop: &'static str,
 ) -> Result<Vec<SpecificAssetId>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -981,7 +1255,12 @@ fn parse_operation_variable_array(
     prop: &'static str,
 ) -> Result<Vec<OperationVariable>, DeserializationError> {
     let arr = v.as_array().ok_or_else(|| {
-        DeserializationError::new(format!("Expected array for {prop}")).prepend_property(prop)
+        let msg = if v.is_null() {
+            "Expected an iterable, but got null".to_string()
+        } else {
+            format!("Expected an iterable, but got: {}", json_type_name(v))
+        };
+        DeserializationError::new(msg).prepend_property(prop)
     })?;
     let mut result = Vec::with_capacity(arr.len());
     for (i, item) in arr.iter().enumerate() {
@@ -994,9 +1273,16 @@ fn parse_operation_variable_array(
 }
 
 fn operation_variable_from_jsonable(v: &Value) -> Result<OperationVariable, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for OperationVariable"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut value: Option<Box<Class>> = None;
     for (k, val) in obj {
         if k == "value" {
@@ -1007,15 +1293,22 @@ fn operation_variable_from_jsonable(v: &Value) -> Result<OperationVariable, Dese
     }
     Ok(OperationVariable {
         value: value
-            .ok_or_else(|| DeserializationError::new("Missing required property: value"))?,
+            .ok_or_else(|| DeserializationError::new("The required property 'value' is missing"))?,
     })
 }
 
 /// Deserialize an [`EventPayload`] from a JSON value.
 pub fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for EventPayload"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut source: Option<Reference> = None;
     let mut source_semantic_id: Option<Reference> = None;
     let mut observable_reference: Option<Reference> = None;
@@ -1068,17 +1361,19 @@ pub fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, Deserializ
         }
     }
     Ok(EventPayload {
-        source: source
-            .ok_or_else(|| DeserializationError::new("Missing required property: source"))?,
+        source: source.ok_or_else(|| {
+            DeserializationError::new("The required property 'source' is missing")
+        })?,
         source_semantic_id,
         observable_reference: observable_reference.ok_or_else(|| {
-            DeserializationError::new("Missing required property: observableReference")
+            DeserializationError::new("The required property 'observableReference' is missing")
         })?,
         observable_semantic_id,
         topic,
         subject_id,
-        time_stamp: time_stamp
-            .ok_or_else(|| DeserializationError::new("Missing required property: timeStamp"))?,
+        time_stamp: time_stamp.ok_or_else(|| {
+            DeserializationError::new("The required property 'timeStamp' is missing")
+        })?,
         payload,
     })
 }
@@ -1086,9 +1381,16 @@ pub fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, Deserializ
 // ── Core struct parsers ───────────────────────────────────────────────────────
 
 fn asset_information_from_jsonable(v: &Value) -> Result<AssetInformation, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for AssetInformation"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut asset_kind: Option<AssetKind> = None;
     let mut global_asset_id: Option<String> = None;
     let mut specific_asset_ids: Option<Vec<SpecificAssetId>> = None;
@@ -1122,8 +1424,9 @@ fn asset_information_from_jsonable(v: &Value) -> Result<AssetInformation, Deseri
         }
     }
     Ok(AssetInformation {
-        asset_kind: asset_kind
-            .ok_or_else(|| DeserializationError::new("Missing required property: assetKind"))?,
+        asset_kind: asset_kind.ok_or_else(|| {
+            DeserializationError::new("The required property 'assetKind' is missing")
+        })?,
         global_asset_id,
         specific_asset_ids,
         asset_type,
@@ -1135,7 +1438,14 @@ fn asset_administration_shell_from_jsonable(
     v: &Value,
 ) -> Result<AssetAdministrationShell, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for AssetAdministrationShell")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut extensions: Option<Vec<Extension>> = None;
     let mut category: Option<String> = None;
@@ -1198,6 +1508,25 @@ fn asset_administration_shell_from_jsonable(
             _ => {}
         }
     }
+    let id =
+        id.ok_or_else(|| DeserializationError::new("The required property 'id' is missing"))?;
+    let asset_information = asset_information.ok_or_else(|| {
+        DeserializationError::new("The required property 'assetInformation' is missing")
+    })?;
+    let model_type = obj
+        .get("modelType")
+        .ok_or_else(|| DeserializationError::new("The required property 'modelType' is missing"))?;
+    let model_type_str = model_type.as_str().ok_or_else(|| {
+        DeserializationError::new(format!(
+            "Expected the property modelType to be a string, but got: {}",
+            json_type_name(model_type)
+        ))
+    })?;
+    if model_type_str != "AssetAdministrationShell" {
+        return Err(DeserializationError::new(format!(
+            "Expected model type 'AssetAdministrationShell', but got: {model_type_str}"
+        )));
+    }
     Ok(AssetAdministrationShell {
         extensions,
         category,
@@ -1205,20 +1534,25 @@ fn asset_administration_shell_from_jsonable(
         display_name,
         description,
         administration,
-        id: id.ok_or_else(|| DeserializationError::new("Missing required property: id"))?,
+        id,
         embedded_data_specifications,
         derived_from,
-        asset_information: asset_information.ok_or_else(|| {
-            DeserializationError::new("Missing required property: assetInformation")
-        })?,
+        asset_information,
         submodels,
     })
 }
 
 fn submodel_from_jsonable(v: &Value) -> Result<Submodel, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Submodel"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut extensions: Option<Vec<Extension>> = None;
     let mut category: Option<String> = None;
     let mut id_short: Option<String> = None;
@@ -1287,6 +1621,22 @@ fn submodel_from_jsonable(v: &Value) -> Result<Submodel, DeserializationError> {
             _ => {}
         }
     }
+    let id =
+        id.ok_or_else(|| DeserializationError::new("The required property 'id' is missing"))?;
+    let model_type = obj
+        .get("modelType")
+        .ok_or_else(|| DeserializationError::new("The required property 'modelType' is missing"))?;
+    let model_type_str = model_type.as_str().ok_or_else(|| {
+        DeserializationError::new(format!(
+            "Expected the property modelType to be a string, but got: {}",
+            json_type_name(model_type)
+        ))
+    })?;
+    if model_type_str != "Submodel" {
+        return Err(DeserializationError::new(format!(
+            "Expected model type 'Submodel', but got: {model_type_str}"
+        )));
+    }
     Ok(Submodel {
         extensions,
         category,
@@ -1294,7 +1644,7 @@ fn submodel_from_jsonable(v: &Value) -> Result<Submodel, DeserializationError> {
         display_name,
         description,
         administration,
-        id: id.ok_or_else(|| DeserializationError::new("Missing required property: id"))?,
+        id,
         kind,
         semantic_id,
         supplemental_semantic_ids,
@@ -1308,7 +1658,14 @@ fn concept_description_from_jsonable(
     v: &Value,
 ) -> Result<ConceptDescription, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for ConceptDescription")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut extensions: Option<Vec<Extension>> = None;
     let mut category: Option<String> = None;
@@ -1358,6 +1715,22 @@ fn concept_description_from_jsonable(
             _ => {}
         }
     }
+    let id =
+        id.ok_or_else(|| DeserializationError::new("The required property 'id' is missing"))?;
+    let model_type = obj
+        .get("modelType")
+        .ok_or_else(|| DeserializationError::new("The required property 'modelType' is missing"))?;
+    let model_type_str = model_type.as_str().ok_or_else(|| {
+        DeserializationError::new(format!(
+            "Expected the property modelType to be a string, but got: {}",
+            json_type_name(model_type)
+        ))
+    })?;
+    if model_type_str != "ConceptDescription" {
+        return Err(DeserializationError::new(format!(
+            "Expected model type 'ConceptDescription', but got: {model_type_str}"
+        )));
+    }
     Ok(ConceptDescription {
         extensions,
         category,
@@ -1365,16 +1738,23 @@ fn concept_description_from_jsonable(
         display_name,
         description,
         administration,
-        id: id.ok_or_else(|| DeserializationError::new("Missing required property: id"))?,
+        id,
         embedded_data_specifications,
         is_case_of,
     })
 }
 
 fn environment_from_jsonable(v: &Value) -> Result<Environment, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Environment"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut asset_administration_shells: Option<Vec<AssetAdministrationShell>> = None;
     let mut submodels: Option<Vec<Submodel>> = None;
     let mut concept_descriptions: Option<Vec<ConceptDescription>> = None;
@@ -1382,8 +1762,12 @@ fn environment_from_jsonable(v: &Value) -> Result<Environment, DeserializationEr
         match k.as_str() {
             "assetAdministrationShells" => {
                 let arr = val.as_array().ok_or_else(|| {
-                    DeserializationError::new("Expected array for assetAdministrationShells")
-                        .prepend_property("assetAdministrationShells")
+                    let msg = if val.is_null() {
+                        "Expected an iterable, but got null".to_string()
+                    } else {
+                        format!("Expected an iterable, but got: {}", json_type_name(val))
+                    };
+                    DeserializationError::new(msg).prepend_property("assetAdministrationShells")
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
@@ -1396,8 +1780,12 @@ fn environment_from_jsonable(v: &Value) -> Result<Environment, DeserializationEr
             }
             "submodels" => {
                 let arr = val.as_array().ok_or_else(|| {
-                    DeserializationError::new("Expected array for submodels")
-                        .prepend_property("submodels")
+                    let msg = if val.is_null() {
+                        "Expected an iterable, but got null".to_string()
+                    } else {
+                        format!("Expected an iterable, but got: {}", json_type_name(val))
+                    };
+                    DeserializationError::new(msg).prepend_property("submodels")
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
@@ -1410,8 +1798,12 @@ fn environment_from_jsonable(v: &Value) -> Result<Environment, DeserializationEr
             }
             "conceptDescriptions" => {
                 let arr = val.as_array().ok_or_else(|| {
-                    DeserializationError::new("Expected array for conceptDescriptions")
-                        .prepend_property("conceptDescriptions")
+                    let msg = if val.is_null() {
+                        "Expected an iterable, but got null".to_string()
+                    } else {
+                        format!("Expected an iterable, but got: {}", json_type_name(val))
+                    };
+                    DeserializationError::new(msg).prepend_property("conceptDescriptions")
                 })?;
                 let mut result = Vec::with_capacity(arr.len());
                 for (i, item) in arr.iter().enumerate() {
@@ -1517,9 +1909,16 @@ fn new_sme_fields() -> SmeCommonFields {
 // ── SME concrete parsers ──────────────────────────────────────────────────────
 
 fn property_from_jsonable(v: &Value) -> Result<Property, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Property"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     let mut value_type: Option<DataTypeDefXsd> = None;
     let mut value: Option<String> = None;
@@ -1555,8 +1954,9 @@ fn property_from_jsonable(v: &Value) -> Result<Property, DeserializationError> {
         supplemental_semantic_ids: sme.supplemental_semantic_ids,
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
-        value_type: value_type
-            .ok_or_else(|| DeserializationError::new("Missing required property: valueType"))?,
+        value_type: value_type.ok_or_else(|| {
+            DeserializationError::new("The required property 'valueType' is missing")
+        })?,
         value,
         value_id,
     })
@@ -1566,7 +1966,14 @@ fn multi_language_property_from_jsonable(
     v: &Value,
 ) -> Result<MultiLanguageProperty, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for MultiLanguageProperty")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut sme = new_sme_fields();
     let mut value: Option<Vec<LangStringTextType>> = None;
@@ -1602,9 +2009,16 @@ fn multi_language_property_from_jsonable(
 }
 
 fn range_from_jsonable(v: &Value) -> Result<Range, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Range"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     let mut value_type: Option<DataTypeDefXsd> = None;
     let mut min: Option<String> = None;
@@ -1639,17 +2053,25 @@ fn range_from_jsonable(v: &Value) -> Result<Range, DeserializationError> {
         supplemental_semantic_ids: sme.supplemental_semantic_ids,
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
-        value_type: value_type
-            .ok_or_else(|| DeserializationError::new("Missing required property: valueType"))?,
+        value_type: value_type.ok_or_else(|| {
+            DeserializationError::new("The required property 'valueType' is missing")
+        })?,
         min,
         max,
     })
 }
 
 fn reference_element_from_jsonable(v: &Value) -> Result<ReferenceElement, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for ReferenceElement"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     let mut value: Option<Reference> = None;
     for (k, val) in obj {
@@ -1675,9 +2097,16 @@ fn reference_element_from_jsonable(v: &Value) -> Result<ReferenceElement, Deseri
 }
 
 fn blob_from_jsonable(v: &Value) -> Result<Blob, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Blob"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     let mut value: Option<Vec<u8>> = None;
     let mut content_type: Option<String> = None;
@@ -1707,15 +2136,23 @@ fn blob_from_jsonable(v: &Value) -> Result<Blob, DeserializationError> {
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
         value,
-        content_type: content_type
-            .ok_or_else(|| DeserializationError::new("Missing required property: contentType"))?,
+        content_type: content_type.ok_or_else(|| {
+            DeserializationError::new("The required property 'contentType' is missing")
+        })?,
     })
 }
 
 fn file_from_jsonable(v: &Value) -> Result<File, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for File"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     let mut value: Option<String> = None;
     let mut content_type: Option<String> = None;
@@ -1745,8 +2182,9 @@ fn file_from_jsonable(v: &Value) -> Result<File, DeserializationError> {
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
         value,
-        content_type: content_type
-            .ok_or_else(|| DeserializationError::new("Missing required property: contentType"))?,
+        content_type: content_type.ok_or_else(|| {
+            DeserializationError::new("The required property 'contentType' is missing")
+        })?,
     })
 }
 
@@ -1754,7 +2192,14 @@ fn relationship_element_from_jsonable(
     v: &Value,
 ) -> Result<RelationshipElement, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for RelationshipElement")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut sme = new_sme_fields();
     let mut first: Option<Reference> = None;
@@ -1786,9 +2231,10 @@ fn relationship_element_from_jsonable(
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
         first: first
-            .ok_or_else(|| DeserializationError::new("Missing required property: first"))?,
-        second: second
-            .ok_or_else(|| DeserializationError::new("Missing required property: second"))?,
+            .ok_or_else(|| DeserializationError::new("The required property 'first' is missing"))?,
+        second: second.ok_or_else(|| {
+            DeserializationError::new("The required property 'second' is missing")
+        })?,
     })
 }
 
@@ -1796,7 +2242,14 @@ fn annotated_relationship_element_from_jsonable(
     v: &Value,
 ) -> Result<AnnotatedRelationshipElement, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for AnnotatedRelationshipElement")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut sme = new_sme_fields();
     let mut first: Option<Reference> = None;
@@ -1832,9 +2285,10 @@ fn annotated_relationship_element_from_jsonable(
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
         first: first
-            .ok_or_else(|| DeserializationError::new("Missing required property: first"))?,
-        second: second
-            .ok_or_else(|| DeserializationError::new("Missing required property: second"))?,
+            .ok_or_else(|| DeserializationError::new("The required property 'first' is missing"))?,
+        second: second.ok_or_else(|| {
+            DeserializationError::new("The required property 'second' is missing")
+        })?,
         annotations,
     })
 }
@@ -1843,7 +2297,14 @@ fn submodel_element_list_from_jsonable(
     v: &Value,
 ) -> Result<SubmodelElementList, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for SubmodelElementList")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut sme = new_sme_fields();
     let mut order_relevant: Option<bool> = None;
@@ -1897,7 +2358,7 @@ fn submodel_element_list_from_jsonable(
         order_relevant,
         semantic_id_list_element,
         type_value_list_element: type_value_list_element.ok_or_else(|| {
-            DeserializationError::new("Missing required property: typeValueListElement")
+            DeserializationError::new("The required property 'typeValueListElement' is missing")
         })?,
         value_type_list_element,
         value,
@@ -1908,7 +2369,14 @@ fn submodel_element_collection_from_jsonable(
     v: &Value,
 ) -> Result<SubmodelElementCollection, DeserializationError> {
     let obj = v.as_object().ok_or_else(|| {
-        DeserializationError::new("Expected a JSON object for SubmodelElementCollection")
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
     })?;
     let mut sme = new_sme_fields();
     let mut value: Option<Vec<Class>> = None;
@@ -1935,9 +2403,16 @@ fn submodel_element_collection_from_jsonable(
 }
 
 fn entity_from_jsonable(v: &Value) -> Result<Entity, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Entity"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     let mut statements: Option<Vec<Class>> = None;
     let mut entity_type: Option<EntityType> = None;
@@ -1977,17 +2452,25 @@ fn entity_from_jsonable(v: &Value) -> Result<Entity, DeserializationError> {
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
         statements,
-        entity_type: entity_type
-            .ok_or_else(|| DeserializationError::new("Missing required property: entityType"))?,
+        entity_type: entity_type.ok_or_else(|| {
+            DeserializationError::new("The required property 'entityType' is missing")
+        })?,
         global_asset_id,
         specific_asset_ids,
     })
 }
 
 fn basic_event_element_from_jsonable(v: &Value) -> Result<BasicEventElement, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for BasicEventElement"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     let mut observed: Option<Reference> = None;
     let mut direction: Option<Direction> = None;
@@ -2051,12 +2534,14 @@ fn basic_event_element_from_jsonable(v: &Value) -> Result<BasicEventElement, Des
         supplemental_semantic_ids: sme.supplemental_semantic_ids,
         qualifiers: sme.qualifiers,
         embedded_data_specifications: sme.embedded_data_specifications,
-        observed: observed
-            .ok_or_else(|| DeserializationError::new("Missing required property: observed"))?,
-        direction: direction
-            .ok_or_else(|| DeserializationError::new("Missing required property: direction"))?,
+        observed: observed.ok_or_else(|| {
+            DeserializationError::new("The required property 'observed' is missing")
+        })?,
+        direction: direction.ok_or_else(|| {
+            DeserializationError::new("The required property 'direction' is missing")
+        })?,
         state: state
-            .ok_or_else(|| DeserializationError::new("Missing required property: state"))?,
+            .ok_or_else(|| DeserializationError::new("The required property 'state' is missing"))?,
         message_topic,
         message_broker,
         last_update,
@@ -2066,9 +2551,16 @@ fn basic_event_element_from_jsonable(v: &Value) -> Result<BasicEventElement, Des
 }
 
 fn operation_from_jsonable(v: &Value) -> Result<Operation, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Operation"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     let mut input_variables: Option<Vec<OperationVariable>> = None;
     let mut output_variables: Option<Vec<OperationVariable>> = None;
@@ -2108,9 +2600,16 @@ fn operation_from_jsonable(v: &Value) -> Result<Operation, DeserializationError>
 }
 
 fn capability_from_jsonable(v: &Value) -> Result<Capability, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Capability"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let mut sme = new_sme_fields();
     for (k, val) in obj {
         parse_sme_common_field(k, val, &mut sme)?;
@@ -2128,18 +2627,56 @@ fn capability_from_jsonable(v: &Value) -> Result<Capability, DeserializationErro
     })
 }
 
+// ── Data specification content dispatcher ────────────────────────────────────
+
+/// Deserialize an [`IDataSpecificationContent`] variant from a JSON value.
+fn data_spec_content_from_jsonable(v: &Value) -> Result<Class, DeserializationError> {
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
+    let model_type_val = obj
+        .get("modelType")
+        .ok_or_else(|| DeserializationError::new("The required property modelType is missing"))?;
+    let model_type_str = model_type_val
+        .as_str()
+        .ok_or_else(|| DeserializationError::new("Expected a string for modelType"))?;
+
+    match model_type_str {
+        "DataSpecificationIec61360" => {
+            data_specification_iec61360_from_jsonable(v).map(Class::DataSpecificationIec61360)
+        }
+        other => Err(DeserializationError::new(format!(
+            "Unexpected model type for IDataSpecificationContent: {other}"
+        ))),
+    }
+}
+
 // ── Public dispatch: class_from_jsonable ──────────────────────────────────────
 
 /// Deserialize any [`Class`] variant from a JSON value.
 ///
 /// Reads the `"modelType"` field to determine which concrete type to parse.
 pub fn class_from_jsonable(v: &Value) -> Result<Class, DeserializationError> {
-    let obj = v
-        .as_object()
-        .ok_or_else(|| DeserializationError::new("Expected a JSON object for Class"))?;
+    let obj = v.as_object().ok_or_else(|| {
+        if v.is_null() {
+            DeserializationError::new("Expected a JSON object, but got null")
+        } else {
+            DeserializationError::new(format!(
+                "Expected a JSON object, but got: {}",
+                json_type_name(v)
+            ))
+        }
+    })?;
     let model_type_val = obj
         .get("modelType")
-        .ok_or_else(|| DeserializationError::new("Missing required property: modelType"))?;
+        .ok_or_else(|| DeserializationError::new("The required property modelType is missing"))?;
     let model_type_str = model_type_val
         .as_str()
         .ok_or_else(|| DeserializationError::new("Expected a string for modelType"))?;
@@ -2213,7 +2750,7 @@ pub fn class_from_jsonable(v: &Value) -> Result<Class, DeserializationError> {
             data_specification_iec61360_from_jsonable(v).map(Class::DataSpecificationIec61360)
         }
         other => Err(DeserializationError::new(format!(
-            "Unknown modelType: {other:?}"
+            "Unexpected model type for ISubmodelElement: {other}"
         ))),
     }
 }

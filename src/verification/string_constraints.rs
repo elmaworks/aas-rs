@@ -290,8 +290,8 @@ pub fn verify_id_short_type(that: &str) -> Vec<VerificationError> {
     if !pattern::matches_id_short(that) {
         errors.push(VerificationError::new(
             "ID-short of Referables shall only feature letters, digits, \
-             underscore (`_`); starting mandatory with a letter. \
-             *I.e.* `[a-zA-Z][a-zA-Z0-9_]*`.",
+             underscore (``_``); starting mandatory with a letter. \
+             *I.e.* ``[a-zA-Z][a-zA-Z0-9_]*``.",
         ));
     }
     errors

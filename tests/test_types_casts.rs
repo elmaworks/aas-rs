@@ -3,7 +3,6 @@
 
 mod common;
 
-
 #[test]
 fn test_casts_over_extension() {
     let instance = common::load_minimal_of("Extension", |c| c.is_extension());

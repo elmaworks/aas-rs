@@ -397,7 +397,9 @@ pub fn data_specification_iec61360s_have_definition_at_least_in_english(
 
 /// Check Reference AASd-121 through AASd-127 constraints.
 /// Returns true if the reference keys constraint passes for Reference type.
-pub fn reference_keys_valid(reference: &Reference) -> (bool, bool, bool, bool, bool, bool, bool) {
+pub fn reference_keys_valid(
+    reference: &Reference,
+) -> (bool, bool, bool, bool, bool, bool, bool, bool) {
     let has_keys = !reference.keys.is_empty();
 
     // AASd-121: first key must be globally identifiable
@@ -448,15 +450,31 @@ pub fn reference_keys_valid(reference: &Reference) -> (bool, bool, bool, bool, b
         true
     };
 
-    // AASd-127: model reference last key must be a referable (AAS referables or fragment)
-    let c127 = if reference.type_ == ReferenceTypes::ModelReference && has_keys {
-        let last = reference.keys.last().unwrap();
-        AAS_REFERABLES.contains(&last.type_) || GENERIC_FRAGMENT_KEYS.contains(&last.type_)
+    // AASd-127: model reference with >1 keys: a FragmentReference key must be preceded by File or Blob
+    let c127 = if reference.type_ == ReferenceTypes::ModelReference
+        && reference.keys.len() > 1
+        && reference.keys.last().unwrap().type_ == KeyTypes::FragmentReference
+    {
+        let second_to_last = &reference.keys[reference.keys.len() - 2];
+        second_to_last.type_ == KeyTypes::File || second_to_last.type_ == KeyTypes::Blob
     } else {
         true
     };
 
-    (c121, c122, c123, c124, c125, c126, c127)
+    // AASd-128: model reference with >2 keys: key after SubmodelElementList must be a non-negative integer
+    let c128 = if reference.type_ == ReferenceTypes::ModelReference && reference.keys.len() > 2 {
+        (0..reference.keys.len() - 1).all(|i| {
+            if reference.keys[i].type_ == KeyTypes::SubmodelElementList {
+                super::pattern::matches_xs_non_negative_integer(&reference.keys[i + 1].value)
+            } else {
+                true
+            }
+        })
+    } else {
+        true
+    };
+
+    (c121, c122, c123, c124, c125, c126, c127, c128)
 }
 
 /// Public re-export of `value_consistent_with_xsd_type` for use in verifier.

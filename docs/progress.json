@@ -100,6 +100,42 @@
         "tests/test_verification_date.rs",
         "tests/test_examples.rs"
       ]
+    },
+    {
+      "id": 7,
+      "name": "Test Coverage Gap — Phase 1: Common helpers",
+      "description": "Add find_immediate_subdirectories and load_golden_text helpers to tests/common/mod.rs",
+      "status": "completed",
+      "files": [
+        "tests/common/mod.rs"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Test Coverage Gap — Phase 2: Jsonization error validation",
+      "description": "Rewrite invalid_test and unserializable_test in test_jsonization_concrete_classes.rs to compare against golden files",
+      "status": "completed",
+      "files": [
+        "tests/test_jsonization_concrete_classes.rs"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Test Coverage Gap — Phase 3: Types casts completion",
+      "description": "Add all 38 cast tests to test_types_casts.rs using exhaustive macro (currently only 12 of 38)",
+      "status": "pending",
+      "files": [
+        "tests/test_types_casts.rs"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Test Coverage Gap — Phase 4: Types overXOrEmpty completion",
+      "description": "Add ~80 missing over_x_or_empty tests to test_types_over_x_or_empty.rs using macros (currently only 28 of ~111)",
+      "status": "pending",
+      "files": [
+        "tests/test_types_over_x_or_empty.rs"
+      ]
     }
   ]
 }

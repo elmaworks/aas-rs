@@ -45,75 +45,95 @@ fn round_trip_test(type_name: &str) {
     }
 }
 
-/// Test that JSON files in `ContainedInEnvironment/Unexpected/Invalid/{type_name}` fail verification.
+/// Test that JSON files in `ContainedInEnvironment/Unexpected/Invalid/{causeDir}/{type_name}`
+/// deserialize successfully but fail verification, with errors matching golden `.json.errors` files.
 fn invalid_test(type_name: &str) {
-    let dir = common::test_data_dir()
+    let invalid_root = common::test_data_dir()
         .join("Json")
         .join("ContainedInEnvironment")
         .join("Unexpected")
-        .join("Invalid")
-        .join(type_name);
+        .join("Invalid");
 
-    if !dir.exists() {
-        return; // Not all types have invalid test data
-    }
-
-    let json_files = common::find_json_files(&dir);
-    for path in &json_files {
-        if path.extension().map(|e| e == "error").unwrap_or(false) {
+    for cause_dir in common::find_immediate_subdirectories(&invalid_root) {
+        let cls_dir = cause_dir.join(type_name);
+        if !cls_dir.exists() {
             continue;
         }
-        let original = common::load_json(path);
-        let env = jsonization::environment_from_jsonable_value(&original);
-        match env {
-            Ok(env_val) => {
-                let env_class = aas_rs::types::class::Class::Environment(env_val);
-                let errors = verification::verify(&env_class, true);
-                // Either deserialization or verification should flag an error
-                if errors.is_empty() {
-                    // Check if error file exists
-                    let error_file = path.with_extension("json.errors");
-                    if !error_file.exists() {
-                        let error_file2 = {
-                            let mut p = path.clone();
-                            p.set_extension("errors");
-                            p
-                        };
-                        if !error_file2.exists() {
-                            // Some invalid examples might not have recorded errors
-                        }
-                    }
-                }
-            }
-            Err(_) => {
-                // Deserialization failure is expected for some invalid examples
-            }
+
+        let json_files = common::find_json_files(&cls_dir);
+        for path in &json_files {
+            let original = common::load_json(path);
+            let env = jsonization::environment_from_jsonable_value(&original).unwrap_or_else(|e| {
+                panic!(
+                    "Expected deserialization to succeed for {}: {e}",
+                    path.display()
+                )
+            });
+
+            let env_class = aas_rs::types::class::Class::Environment(env);
+            let errors = verification::verify(&env_class, true);
+
+            // Format like TypeScript: each error as "{path}: {message}", joined by \n, trailing \n
+            let mut lines: Vec<String> = errors.iter().map(|e| format!("{e}")).collect();
+            lines.push(String::new());
+            let got = lines.join("\n");
+
+            let golden_path = std::path::PathBuf::from(format!("{}.errors", path.display()));
+            let expected = common::load_golden_text(&golden_path);
+            assert_eq!(
+                got,
+                expected,
+                "Verification errors mismatch for {}",
+                path.display()
+            );
         }
     }
 }
 
-/// Test that JSON files in `ContainedInEnvironment/Unexpected/Unserializable` fail deserialization.
+/// Test that JSON files in `ContainedInEnvironment/Unexpected/Unserializable/{causeDir}/{type_name}`
+/// fail deserialization with errors matching golden `.json.error` files.
 fn unserializable_test(type_name: &str) {
-    let dir = common::test_data_dir()
+    let unserializable_root = common::test_data_dir()
         .join("Json")
         .join("ContainedInEnvironment")
         .join("Unexpected")
-        .join("Unserializable")
-        .join(type_name);
+        .join("Unserializable");
 
-    if !dir.exists() {
-        return;
-    }
+    for cause_dir in common::find_immediate_subdirectories(&unserializable_root) {
+        if cause_dir
+            .file_name()
+            .map(|n| n == "UnexpectedAdditionalProperty")
+            .unwrap_or(false)
+        {
+            continue;
+        }
 
-    let json_files = common::find_json_files(&dir);
-    for path in &json_files {
-        let original = common::load_json(path);
-        let result = jsonization::environment_from_jsonable_value(&original);
-        assert!(
-            result.is_err(),
-            "Expected deserialization to fail for {}",
-            path.display()
-        );
+        let cls_dir = cause_dir.join(type_name);
+        if !cls_dir.exists() {
+            continue;
+        }
+
+        let json_files = common::find_json_files(&cls_dir);
+        for path in &json_files {
+            let original = common::load_json(path);
+            let error = match jsonization::environment_from_jsonable_value(&original) {
+                Err(e) => e,
+                Ok(_) => panic!("Expected deserialization to fail for {}", path.display()),
+            };
+
+            // Rust path starts with "." for Property segments; golden files omit the leading ".".
+            let rust_output = format!("{error}\n");
+            let got = rust_output.strip_prefix('.').unwrap_or(&rust_output);
+
+            let golden_path = std::path::PathBuf::from(format!("{}.error", path.display()));
+            let expected = common::load_golden_text(&golden_path);
+            assert_eq!(
+                got,
+                expected,
+                "Deserialization error mismatch for {}",
+                path.display()
+            );
+        }
     }
 }
 

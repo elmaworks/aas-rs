@@ -175,6 +175,31 @@ pub fn load_maximal_of<F: Fn(&Class) -> bool>(type_name: &str, condition: F) -> 
     must_find(&env, condition)
 }
 
+/// Returns immediate subdirectories of `dir`, sorted by path.
+pub fn find_immediate_subdirectories(dir: &Path) -> Vec<PathBuf> {
+    let mut result = Vec::new();
+    if !dir.exists() {
+        return result;
+    }
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                result.push(path);
+            }
+        }
+    }
+    result.sort();
+    result
+}
+
+/// Reads a text file and normalizes `\r\n` to `\n`.
+pub fn load_golden_text(path: &Path) -> String {
+    std::fs::read_to_string(path)
+        .unwrap_or_else(|e| panic!("Failed to read golden file {}: {e}", path.display()))
+        .replace("\r\n", "\n")
+}
+
 /// Verifies JSON round-trip: `original_json` → deserialize → serialize → compare.
 ///
 /// Returns `None` on success or a descriptive error string.
