@@ -54,79 +54,123 @@ fn float64_from_jsonable(v: &Value) -> Result<f64, DeserializationError> {
 
 // ── Enum helpers ──────────────────────────────────────────────────────────────
 
-fn modelling_kind_from_jsonable(v: &Value) -> Result<ModellingKind, DeserializationError> {
+/// Deserialize a [`ModellingKind`] from a JSON value.
+pub fn modelling_kind_from_jsonable(v: &Value) -> Result<ModellingKind, DeserializationError> {
     let s = str_from_jsonable(v)?;
     stringification::modelling_kind_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid ModellingKind literal: {s:?}"))
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of ModellingKind: {s}"
+        ))
     })
 }
 
-fn qualifier_kind_from_jsonable(v: &Value) -> Result<QualifierKind, DeserializationError> {
+/// Deserialize a [`QualifierKind`] from a JSON value.
+pub fn qualifier_kind_from_jsonable(v: &Value) -> Result<QualifierKind, DeserializationError> {
     let s = str_from_jsonable(v)?;
     stringification::qualifier_kind_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid QualifierKind literal: {s:?}"))
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of QualifierKind: {s}"
+        ))
     })
 }
 
-fn asset_kind_from_jsonable(v: &Value) -> Result<AssetKind, DeserializationError> {
+/// Deserialize an [`AssetKind`] from a JSON value.
+pub fn asset_kind_from_jsonable(v: &Value) -> Result<AssetKind, DeserializationError> {
     let s = str_from_jsonable(v)?;
-    stringification::asset_kind_from_str(&s)
-        .ok_or_else(|| DeserializationError::new(format!("Not a valid AssetKind literal: {s:?}")))
+    stringification::asset_kind_from_str(&s).ok_or_else(|| {
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of AssetKind: {s}"
+        ))
+    })
 }
 
-fn aas_submodel_elements_from_jsonable(
+/// Deserialize an [`AasSubmodelElements`] from a JSON value.
+pub fn aas_submodel_elements_from_jsonable(
     v: &Value,
 ) -> Result<AasSubmodelElements, DeserializationError> {
     let s = str_from_jsonable(v)?;
     stringification::aas_submodel_elements_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid AasSubmodelElements literal: {s:?}"))
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of AasSubmodelElements: {s}"
+        ))
     })
 }
 
-fn entity_type_from_jsonable(v: &Value) -> Result<EntityType, DeserializationError> {
+/// Deserialize an [`EntityType`] from a JSON value.
+pub fn entity_type_from_jsonable(v: &Value) -> Result<EntityType, DeserializationError> {
     let s = str_from_jsonable(v)?;
-    stringification::entity_type_from_str(&s)
-        .ok_or_else(|| DeserializationError::new(format!("Not a valid EntityType literal: {s:?}")))
+    stringification::entity_type_from_str(&s).ok_or_else(|| {
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of EntityType: {s}"
+        ))
+    })
 }
 
-fn direction_from_jsonable(v: &Value) -> Result<Direction, DeserializationError> {
+/// Deserialize a [`Direction`] from a JSON value.
+pub fn direction_from_jsonable(v: &Value) -> Result<Direction, DeserializationError> {
     let s = str_from_jsonable(v)?;
-    stringification::direction_from_str(&s)
-        .ok_or_else(|| DeserializationError::new(format!("Not a valid Direction literal: {s:?}")))
+    stringification::direction_from_str(&s).ok_or_else(|| {
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of Direction: {s}"
+        ))
+    })
 }
 
-fn state_of_event_from_jsonable(v: &Value) -> Result<StateOfEvent, DeserializationError> {
+/// Deserialize a [`StateOfEvent`] from a JSON value.
+pub fn state_of_event_from_jsonable(v: &Value) -> Result<StateOfEvent, DeserializationError> {
     let s = str_from_jsonable(v)?;
     stringification::state_of_event_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid StateOfEvent literal: {s:?}"))
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of StateOfEvent: {s}"
+        ))
     })
 }
 
-fn reference_types_from_jsonable(v: &Value) -> Result<ReferenceTypes, DeserializationError> {
+/// Deserialize a [`ReferenceTypes`] from a JSON value.
+pub fn reference_types_from_jsonable(v: &Value) -> Result<ReferenceTypes, DeserializationError> {
     let s = str_from_jsonable(v)?;
     stringification::reference_types_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid ReferenceTypes literal: {s:?}"))
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of ReferenceTypes: {s}"
+        ))
     })
 }
 
-fn key_types_from_jsonable(v: &Value) -> Result<KeyTypes, DeserializationError> {
+/// Deserialize a [`KeyTypes`] from a JSON value.
+pub fn key_types_from_jsonable(v: &Value) -> Result<KeyTypes, DeserializationError> {
     let s = str_from_jsonable(v)?;
-    stringification::key_types_from_str(&s)
-        .ok_or_else(|| DeserializationError::new(format!("Not a valid KeyTypes literal: {s:?}")))
+    stringification::key_types_from_str(&s).ok_or_else(|| {
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of KeyTypes: {s}"
+        ))
+    })
 }
 
-fn data_type_def_xsd_from_jsonable(v: &Value) -> Result<DataTypeDefXsd, DeserializationError> {
+/// Deserialize a [`DataTypeDefXsd`] from a JSON value.
+pub fn data_type_def_xsd_from_jsonable(v: &Value) -> Result<DataTypeDefXsd, DeserializationError> {
     let s = str_from_jsonable(v)?;
     stringification::data_type_def_xsd_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid DataTypeDefXsd literal: {s:?}"))
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of DataTypeDefXsd: {s}"
+        ))
     })
 }
 
-fn data_type_iec_61360_from_jsonable(v: &Value) -> Result<DataTypeIec61360, DeserializationError> {
+/// Deserialize a [`DataTypeIec61360`] from a JSON value.
+pub fn data_type_iec61360_from_jsonable(
+    v: &Value,
+) -> Result<DataTypeIec61360, DeserializationError> {
     let s = str_from_jsonable(v)?;
     stringification::data_type_iec_61360_from_str(&s).ok_or_else(|| {
-        DeserializationError::new(format!("Not a valid DataTypeIec61360 literal: {s:?}"))
+        DeserializationError::new(format!(
+            "Not a valid string representation of a literal of DataTypeIec61360: {s}"
+        ))
     })
+}
+
+// Keep internal alias for use within this module.
+fn data_type_iec_61360_from_jsonable(v: &Value) -> Result<DataTypeIec61360, DeserializationError> {
+    data_type_iec61360_from_jsonable(v)
 }
 
 // ── Struct parsers ────────────────────────────────────────────────────────────
@@ -967,7 +1011,8 @@ fn operation_variable_from_jsonable(v: &Value) -> Result<OperationVariable, Dese
     })
 }
 
-fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, DeserializationError> {
+/// Deserialize an [`EventPayload`] from a JSON value.
+pub fn event_payload_from_jsonable(v: &Value) -> Result<EventPayload, DeserializationError> {
     let obj = v
         .as_object()
         .ok_or_else(|| DeserializationError::new("Expected a JSON object for EventPayload"))?;

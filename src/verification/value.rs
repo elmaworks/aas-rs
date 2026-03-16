@@ -30,6 +30,45 @@ pub fn is_leap_year(mut year: i64) -> bool {
     true
 }
 
+/// Compute leap year from year string digits (for years that overflow i64).
+///
+/// Extracts last 3 digits and sign to determine divisibility by 4/100/400.
+fn is_leap_year_from_str(year_str: &str) -> bool {
+    let (negative, digits) = if let Some(rest) = year_str.strip_prefix('-') {
+        (true, rest)
+    } else {
+        (false, year_str)
+    };
+
+    // Get last 3 digits for mod 400, last 2 for mod 100, last 1 for mod 4.
+    let suffix_400: u32 = if digits.len() >= 3 {
+        digits[digits.len() - 3..].parse().unwrap_or(0)
+    } else {
+        digits.parse().unwrap_or(0)
+    };
+
+    // For BCE years: adjusted = abs(year) - 1
+    let adjusted = if negative {
+        // For mod operations: (abs_year - 1) % n = (suffix - 1) % n
+        if suffix_400 == 0 {
+            399
+        } else {
+            suffix_400 - 1
+        }
+    } else {
+        suffix_400
+    };
+
+    if adjusted % 4 != 0 {
+        return false;
+    }
+    let mod100 = adjusted % 100;
+    if mod100 != 0 {
+        return true;
+    }
+    adjusted % 400 == 0
+}
+
 /// Check that `value` is a valid xs:date.
 pub fn is_xs_date(value: &str) -> bool {
     if !pattern::matches_xs_date(value) {
@@ -41,10 +80,7 @@ pub fn is_xs_date(value: &str) -> bool {
         None => return false,
     };
 
-    let year: i64 = match caps[1].parse() {
-        Ok(v) => v,
-        Err(_) => return false,
-    };
+    let year_str = &caps[1];
     let month: u8 = match caps[2].parse() {
         Ok(v) => v,
         Err(_) => return false,
@@ -54,9 +90,11 @@ pub fn is_xs_date(value: &str) -> bool {
         Err(_) => return false,
     };
 
-    if year == 0 {
+    // Year zero is not valid per XSD spec.
+    if year_str == "0000" || year_str == "-0000" {
         return false;
     }
+
     if day == 0 {
         return false;
     }
@@ -65,7 +103,11 @@ pub fn is_xs_date(value: &str) -> bool {
     }
 
     let max_days = if month == 2 {
-        if is_leap_year(year) {
+        let leap = match year_str.parse::<i64>() {
+            Ok(y) => is_leap_year(y),
+            Err(_) => is_leap_year_from_str(year_str),
+        };
+        if leap {
             29
         } else {
             28

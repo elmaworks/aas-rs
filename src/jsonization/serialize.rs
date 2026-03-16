@@ -529,10 +529,6 @@ fn serialize_environment(e: &Environment) -> Value {
             Value::Array(cds.iter().map(serialize_concept_description).collect()),
         );
     }
-    m.insert(
-        "modelType".to_owned(),
-        Value::String("Environment".to_owned()),
-    );
     Value::Object(m)
 }
 

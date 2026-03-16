@@ -81,7 +81,7 @@
       "id": 6,
       "name": "Testing",
       "description": "Implement all Rust tests satisfying the corresponding TypeScript test suite",
-      "status": "pending",
+      "status": "completed",
       "files": [
         "tests/test_common_base64.rs",
         "tests/test_common_base64url.rs",

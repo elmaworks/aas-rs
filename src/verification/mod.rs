@@ -27,4 +27,5 @@ mod value;
 mod verifier;
 
 pub use error::VerificationError;
+pub use value::is_leap_year;
 pub use verifier::verify_class as verify;
