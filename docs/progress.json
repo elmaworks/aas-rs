@@ -54,7 +54,7 @@
       "id": 4,
       "name": "jsonization",
       "description": "Implement JSON serialization and deserialization for all AAS types",
-      "status": "pending",
+      "status": "completed",
       "files": [
         "src/jsonization/mod.rs",
         "src/jsonization/error.rs",
