@@ -21,6 +21,7 @@ impl fmt::Display for Segment {
 }
 
 /// Error returned when deserializing an AAS value from JSON fails.
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, thiserror::Error)]
 pub struct DeserializationError {
     /// Human-readable description of what went wrong.
@@ -55,12 +56,14 @@ impl DeserializationError {
     }
 
     /// Prepend a [`Segment::Property`] to the error path.
+    #[must_use]
     pub fn prepend_property(mut self, name: impl Into<String>) -> Self {
         self.path.insert(0, Segment::Property(name.into()));
         self
     }
 
     /// Prepend a [`Segment::Index`] to the error path.
+    #[must_use]
     pub fn prepend_index(mut self, index: usize) -> Self {
         self.path.insert(0, Segment::Index(index));
         self

@@ -51,6 +51,7 @@ macro_rules! push_prop {
 
 // ---- Shared SME field verification helpers ----------------------------------
 
+#[allow(clippy::too_many_arguments)]
 fn verify_sme_constraints(
     extensions: &Option<Vec<Extension>>,
     description: &Option<Vec<LangStringTextType>>,
@@ -155,6 +156,7 @@ fn verify_sme_string_fields(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn recurse_sme_common(
     extensions: &Option<Vec<Extension>>,
     display_name: &Option<Vec<LangStringNameType>>,
@@ -446,10 +448,7 @@ fn verify_qualifier(that: &Qualifier, recurse: bool) -> Vec<VerificationError> {
     errors
 }
 
-fn verify_asset_administration_shell(
-    that: &AssetAdministrationShell,
-    recurse: bool,
-) -> Vec<VerificationError> {
+fn verify_aas_constraints(that: &AssetAdministrationShell) -> Vec<VerificationError> {
     let mut errors = Vec::new();
 
     if that
@@ -541,6 +540,84 @@ fn verify_asset_administration_shell(
             ));
         }
     }
+    errors
+}
+
+fn recurse_aas(
+    that: &AssetAdministrationShell,
+    recurse: bool,
+    errors: &mut Vec<VerificationError>,
+) {
+    if !recurse {
+        return;
+    }
+    if let Some(exts) = &that.extensions {
+        for (idx, item) in exts.iter().enumerate() {
+            for mut err in verify_extension(item, recurse) {
+                err.prepend_index(idx);
+                err.prepend_property("extensions");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(dn) = &that.display_name {
+        for (idx, item) in dn.iter().enumerate() {
+            for mut err in verify_lang_string_name_type(item) {
+                err.prepend_index(idx);
+                err.prepend_property("displayName");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(desc) = &that.description {
+        for (idx, item) in desc.iter().enumerate() {
+            for mut err in verify_lang_string_text_type(item) {
+                err.prepend_index(idx);
+                err.prepend_property("description");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(adm) = &that.administration {
+        push_prop!(
+            errors,
+            verify_administrative_information(adm, recurse),
+            "administration"
+        );
+    }
+    if let Some(eds) = &that.embedded_data_specifications {
+        for (idx, item) in eds.iter().enumerate() {
+            for mut err in verify_embedded_data_specification(item, recurse) {
+                err.prepend_index(idx);
+                err.prepend_property("embeddedDataSpecifications");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(df) = &that.derived_from {
+        push_prop!(errors, verify_reference(df, recurse), "derivedFrom");
+    }
+    push_prop!(
+        errors,
+        verify_asset_information(&that.asset_information, recurse),
+        "assetInformation"
+    );
+    if let Some(sms) = &that.submodels {
+        for (idx, item) in sms.iter().enumerate() {
+            for mut err in verify_reference(item, recurse) {
+                err.prepend_index(idx);
+                err.prepend_property("submodels");
+                errors.push(err);
+            }
+        }
+    }
+}
+
+fn verify_asset_administration_shell(
+    that: &AssetAdministrationShell,
+    recurse: bool,
+) -> Vec<VerificationError> {
+    let mut errors = verify_aas_constraints(that);
 
     if let Some(cat) = &that.category {
         push_prop!(errors, verify_name_type(cat), "category");
@@ -550,68 +627,7 @@ fn verify_asset_administration_shell(
     }
     push_prop!(errors, verify_identifier(&that.id), "id");
 
-    if recurse {
-        if let Some(exts) = &that.extensions {
-            for (idx, item) in exts.iter().enumerate() {
-                for mut err in verify_extension(item, recurse) {
-                    err.prepend_index(idx);
-                    err.prepend_property("extensions");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(dn) = &that.display_name {
-            for (idx, item) in dn.iter().enumerate() {
-                for mut err in verify_lang_string_name_type(item) {
-                    err.prepend_index(idx);
-                    err.prepend_property("displayName");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(desc) = &that.description {
-            for (idx, item) in desc.iter().enumerate() {
-                for mut err in verify_lang_string_text_type(item) {
-                    err.prepend_index(idx);
-                    err.prepend_property("description");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(adm) = &that.administration {
-            push_prop!(
-                errors,
-                verify_administrative_information(adm, recurse),
-                "administration"
-            );
-        }
-        if let Some(eds) = &that.embedded_data_specifications {
-            for (idx, item) in eds.iter().enumerate() {
-                for mut err in verify_embedded_data_specification(item, recurse) {
-                    err.prepend_index(idx);
-                    err.prepend_property("embeddedDataSpecifications");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(df) = &that.derived_from {
-            push_prop!(errors, verify_reference(df, recurse), "derivedFrom");
-        }
-        push_prop!(
-            errors,
-            verify_asset_information(&that.asset_information, recurse),
-            "assetInformation"
-        );
-        if let Some(sms) = &that.submodels {
-            for (idx, item) in sms.iter().enumerate() {
-                for mut err in verify_reference(item, recurse) {
-                    err.prepend_index(idx);
-                    err.prepend_property("submodels");
-                    errors.push(err);
-                }
-            }
-        }
-    }
+    recurse_aas(that, recurse, &mut errors);
     errors
 }
 
@@ -622,9 +638,8 @@ fn verify_asset_information(that: &AssetInformation, recurse: bool) -> Vec<Verif
     if let Some(specific_ids) = &that.specific_asset_ids {
         let valid = specific_ids.iter().all(|sid| {
             sid.name != "globalAssetId"
-                || (that.global_asset_id.is_some()
-                    && sid.name == "globalAssetId"
-                    && Some(&sid.value) == that.global_asset_id.as_ref())
+                || that.global_asset_id.is_some()
+                    && Some(&sid.value) == that.global_asset_id.as_ref()
         });
         if !valid {
             errors.push(VerificationError::new(
@@ -1789,7 +1804,7 @@ fn verify_capability(that: &Capability, recurse: bool) -> Vec<VerificationError>
     errors
 }
 
-fn verify_concept_description(that: &ConceptDescription, recurse: bool) -> Vec<VerificationError> {
+fn verify_cd_constraints(that: &ConceptDescription) -> Vec<VerificationError> {
     let mut errors = Vec::new();
 
     if that
@@ -1865,6 +1880,13 @@ fn verify_concept_description(that: &ConceptDescription, recurse: bool) -> Vec<V
         ));
     }
 
+    errors.extend(verify_cd_aasc_constraints(that));
+    errors
+}
+
+fn verify_cd_aasc_constraints(that: &ConceptDescription) -> Vec<VerificationError> {
+    let mut errors = Vec::new();
+
     // AASc-3a-008
     if let Some(eds) = &that.embedded_data_specifications {
         if !data_specification_iec61360s_have_definition_at_least_in_english(eds)
@@ -1905,6 +1927,73 @@ fn verify_concept_description(that: &ConceptDescription, recurse: bool) -> Vec<V
             ));
         }
     }
+    errors
+}
+
+fn recurse_cd(
+    that: &ConceptDescription,
+    recurse: bool,
+    errors: &mut Vec<VerificationError>,
+) {
+    if !recurse {
+        return;
+    }
+    if let Some(exts) = &that.extensions {
+        for (idx, item) in exts.iter().enumerate() {
+            for mut err in verify_extension(item, recurse) {
+                err.prepend_index(idx);
+                err.prepend_property("extensions");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(dn) = &that.display_name {
+        for (idx, item) in dn.iter().enumerate() {
+            for mut err in verify_lang_string_name_type(item) {
+                err.prepend_index(idx);
+                err.prepend_property("displayName");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(desc) = &that.description {
+        for (idx, item) in desc.iter().enumerate() {
+            for mut err in verify_lang_string_text_type(item) {
+                err.prepend_index(idx);
+                err.prepend_property("description");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(adm) = &that.administration {
+        push_prop!(
+            errors,
+            verify_administrative_information(adm, recurse),
+            "administration"
+        );
+    }
+    if let Some(eds) = &that.embedded_data_specifications {
+        for (idx, item) in eds.iter().enumerate() {
+            for mut err in verify_embedded_data_specification(item, recurse) {
+                err.prepend_index(idx);
+                err.prepend_property("embeddedDataSpecifications");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(ico) = &that.is_case_of {
+        for (idx, item) in ico.iter().enumerate() {
+            for mut err in verify_reference(item, recurse) {
+                err.prepend_index(idx);
+                err.prepend_property("isCaseOf");
+                errors.push(err);
+            }
+        }
+    }
+}
+
+fn verify_concept_description(that: &ConceptDescription, recurse: bool) -> Vec<VerificationError> {
+    let mut errors = verify_cd_constraints(that);
 
     if let Some(cat) = &that.category {
         push_prop!(errors, verify_name_type(cat), "category");
@@ -1914,60 +2003,7 @@ fn verify_concept_description(that: &ConceptDescription, recurse: bool) -> Vec<V
     }
     push_prop!(errors, verify_identifier(&that.id), "id");
 
-    if recurse {
-        if let Some(exts) = &that.extensions {
-            for (idx, item) in exts.iter().enumerate() {
-                for mut err in verify_extension(item, recurse) {
-                    err.prepend_index(idx);
-                    err.prepend_property("extensions");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(dn) = &that.display_name {
-            for (idx, item) in dn.iter().enumerate() {
-                for mut err in verify_lang_string_name_type(item) {
-                    err.prepend_index(idx);
-                    err.prepend_property("displayName");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(desc) = &that.description {
-            for (idx, item) in desc.iter().enumerate() {
-                for mut err in verify_lang_string_text_type(item) {
-                    err.prepend_index(idx);
-                    err.prepend_property("description");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(adm) = &that.administration {
-            push_prop!(
-                errors,
-                verify_administrative_information(adm, recurse),
-                "administration"
-            );
-        }
-        if let Some(eds) = &that.embedded_data_specifications {
-            for (idx, item) in eds.iter().enumerate() {
-                for mut err in verify_embedded_data_specification(item, recurse) {
-                    err.prepend_index(idx);
-                    err.prepend_property("embeddedDataSpecifications");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(ico) = &that.is_case_of {
-            for (idx, item) in ico.iter().enumerate() {
-                for mut err in verify_reference(item, recurse) {
-                    err.prepend_index(idx);
-                    err.prepend_property("isCaseOf");
-                    errors.push(err);
-                }
-            }
-        }
-    }
+    recurse_cd(that, recurse, &mut errors);
     errors
 }
 
@@ -2269,10 +2305,8 @@ fn verify_lang_string_definition_type_iec61360(
     errors
 }
 
-fn verify_data_specification_iec61360(
-    that: &DataSpecificationIec61360,
-    recurse: bool,
-) -> Vec<VerificationError> {
+fn verify_ds_iec61360_constraints(that: &DataSpecificationIec61360) -> Vec<VerificationError> {
+    use crate::constants::IEC_61360_DATA_TYPES_WITH_UNIT;
     let mut errors = Vec::new();
 
     // AASc-3a-010: value and valueList cannot both be set
@@ -2283,7 +2317,6 @@ fn verify_data_specification_iec61360(
     }
 
     // AASc-3a-009: data types with unit must have unit or unit_id
-    use crate::constants::IEC_61360_DATA_TYPES_WITH_UNIT;
     if let Some(dt) = that.data_type {
         if IEC_61360_DATA_TYPES_WITH_UNIT.contains(&dt)
             && that.unit.is_none()
@@ -2350,6 +2383,58 @@ fn verify_data_specification_iec61360(
             "Constraint AASc-3a-002: preferred name shall be provided at least in English.",
         ));
     }
+    errors
+}
+
+fn recurse_ds_iec61360(
+    that: &DataSpecificationIec61360,
+    recurse: bool,
+    errors: &mut Vec<VerificationError>,
+) {
+    if !recurse {
+        return;
+    }
+    for (idx, item) in that.preferred_name.iter().enumerate() {
+        for mut err in verify_lang_string_preferred_name_type_iec61360(item) {
+            err.prepend_index(idx);
+            err.prepend_property("preferredName");
+            errors.push(err);
+        }
+    }
+    if let Some(sn) = &that.short_name {
+        for (idx, item) in sn.iter().enumerate() {
+            for mut err in verify_lang_string_short_name_type_iec61360(item) {
+                err.prepend_index(idx);
+                err.prepend_property("shortName");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(uid) = &that.unit_id {
+        push_prop!(errors, verify_reference(uid, recurse), "unitId");
+    }
+    if let Some(def) = &that.definition {
+        for (idx, item) in def.iter().enumerate() {
+            for mut err in verify_lang_string_definition_type_iec61360(item) {
+                err.prepend_index(idx);
+                err.prepend_property("definition");
+                errors.push(err);
+            }
+        }
+    }
+    if let Some(vl) = &that.value_list {
+        push_prop!(errors, verify_value_list(vl, recurse), "valueList");
+    }
+    if let Some(lt) = &that.level_type {
+        push_prop!(errors, verify_level_type(lt), "levelType");
+    }
+}
+
+fn verify_data_specification_iec61360(
+    that: &DataSpecificationIec61360,
+    recurse: bool,
+) -> Vec<VerificationError> {
+    let mut errors = verify_ds_iec61360_constraints(that);
 
     if let Some(u) = &that.unit {
         push_prop!(errors, verify_non_empty_xml_serializable_string(u), "unit");
@@ -2379,41 +2464,6 @@ fn verify_data_specification_iec61360(
         push_prop!(errors, verify_value_type_iec61360(v), "value");
     }
 
-    if recurse {
-        for (idx, item) in that.preferred_name.iter().enumerate() {
-            for mut err in verify_lang_string_preferred_name_type_iec61360(item) {
-                err.prepend_index(idx);
-                err.prepend_property("preferredName");
-                errors.push(err);
-            }
-        }
-        if let Some(sn) = &that.short_name {
-            for (idx, item) in sn.iter().enumerate() {
-                for mut err in verify_lang_string_short_name_type_iec61360(item) {
-                    err.prepend_index(idx);
-                    err.prepend_property("shortName");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(uid) = &that.unit_id {
-            push_prop!(errors, verify_reference(uid, recurse), "unitId");
-        }
-        if let Some(def) = &that.definition {
-            for (idx, item) in def.iter().enumerate() {
-                for mut err in verify_lang_string_definition_type_iec61360(item) {
-                    err.prepend_index(idx);
-                    err.prepend_property("definition");
-                    errors.push(err);
-                }
-            }
-        }
-        if let Some(vl) = &that.value_list {
-            push_prop!(errors, verify_value_list(vl, recurse), "valueList");
-        }
-        if let Some(lt) = &that.level_type {
-            push_prop!(errors, verify_level_type(lt), "levelType");
-        }
-    }
+    recurse_ds_iec61360(that, recurse, &mut errors);
     errors
 }

@@ -75,9 +75,8 @@ pub fn is_xs_date(value: &str) -> bool {
         return false;
     }
 
-    let caps = match RE_DATE_PREFIX.captures(value) {
-        Some(c) => c,
-        None => return false,
+    let Some(caps) = RE_DATE_PREFIX.captures(value) else {
+        return false;
     };
 
     let year_str = &caps[1];
@@ -164,6 +163,7 @@ pub fn is_xs_float(value: &str) -> bool {
             if !v.is_finite() {
                 return false;
             }
+            #[allow(clippy::cast_possible_truncation)]
             (v as f32).is_finite()
         }
         Err(_) => false,
@@ -194,9 +194,8 @@ pub fn is_xs_g_month_day(value: &str) -> bool {
 
 /// Check that `value` is a valid xs:long (64-bit signed integer).
 pub fn is_xs_long(value: &str) -> bool {
-    let caps = match RE_LONG.captures(value) {
-        Some(c) => c,
-        None => return false,
+    let Some(caps) = RE_LONG.captures(value) else {
+        return false;
     };
 
     let sign = caps.get(1).map_or("", |m| m.as_str());
@@ -219,10 +218,10 @@ pub fn is_xs_long(value: &str) -> bool {
     }
 
     for (a, b) in number_part.bytes().zip(limit.bytes()) {
-        if a > b {
-            return false;
-        } else if a < b {
-            return true;
+        match a.cmp(&b) {
+            std::cmp::Ordering::Greater => return false,
+            std::cmp::Ordering::Less => return true,
+            std::cmp::Ordering::Equal => {}
         }
     }
     true
@@ -263,9 +262,8 @@ pub fn is_xs_byte(value: &str) -> bool {
 
 /// Check that `value` is a valid xs:unsignedLong (64-bit unsigned integer).
 pub fn is_xs_unsigned_long(value: &str) -> bool {
-    let caps = match RE_UNSIGNED_LONG.captures(value) {
-        Some(c) => c,
-        None => return false,
+    let Some(caps) = RE_UNSIGNED_LONG.captures(value) else {
+        return false;
     };
 
     let number_part = match caps.get(2) {
@@ -281,10 +279,10 @@ pub fn is_xs_unsigned_long(value: &str) -> bool {
     }
 
     for (a, b) in number_part.bytes().zip(LARGEST_UNSIGNED_LONG.bytes()) {
-        if a > b {
-            return false;
-        } else if a < b {
-            return true;
+        match a.cmp(&b) {
+            std::cmp::Ordering::Greater => return false,
+            std::cmp::Ordering::Less => return true,
+            std::cmp::Ordering::Equal => {}
         }
     }
     true
@@ -324,6 +322,7 @@ pub fn is_xs_unsigned_byte(value: &str) -> bool {
 }
 
 /// Check that `value` is consistent with the given XSD type.
+#[allow(clippy::module_name_repetitions)]
 pub fn value_consistent_with_xsd_type(value: &str, value_type: DataTypeDefXsd) -> bool {
     match value_type {
         DataTypeDefXsd::AnyUri => pattern::matches_xs_any_uri(value),

@@ -227,7 +227,9 @@ pub fn submodel_element_is_of_type(element: &Class, expected_type: AasSubmodelEl
         AasSubmodelElements::AnnotatedRelationshipElement => {
             element.is_annotated_relationship_element()
         }
-        AasSubmodelElements::BasicEventElement => element.is_basic_event_element(),
+        AasSubmodelElements::BasicEventElement | AasSubmodelElements::EventElement => {
+            element.is_basic_event_element()
+        }
         AasSubmodelElements::Blob => element.is_blob(),
         AasSubmodelElements::Capability => element.is_capability(),
         AasSubmodelElements::DataElement => {
@@ -239,7 +241,6 @@ pub fn submodel_element_is_of_type(element: &Class, expected_type: AasSubmodelEl
                 || element.is_reference_element()
         }
         AasSubmodelElements::Entity => element.is_entity(),
-        AasSubmodelElements::EventElement => element.is_basic_event_element(),
         AasSubmodelElements::File => element.is_file(),
         AasSubmodelElements::MultiLanguageProperty => element.is_multi_language_property(),
         AasSubmodelElements::Operation => element.is_operation(),

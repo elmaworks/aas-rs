@@ -304,6 +304,7 @@ fn serialize_data_specification_iec61360(d: &DataSpecificationIec61360) -> Value
 
 // ── SME common fields helper ──────────────────────────────────────────────────
 
+#[allow(clippy::too_many_arguments)]
 fn insert_sme_common_fields(
     m: &mut Map<String, Value>,
     extensions: &Option<Vec<Extension>>,

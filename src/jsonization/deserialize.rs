@@ -117,8 +117,7 @@ fn json_type_name(v: &Value) -> &'static str {
         Value::Bool(_) => "boolean",
         Value::Number(_) => "number",
         Value::String(_) => "string",
-        Value::Array(_) => "object",
-        Value::Object(_) => "object",
+        Value::Array(_) | Value::Object(_) => "object",
     }
 }
 

@@ -54,6 +54,7 @@ impl fmt::Display for Path {
 }
 
 /// Represents a verification error in the data.
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug, Clone)]
 pub struct VerificationError {
     /// Human-readable description of the error.

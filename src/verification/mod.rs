@@ -26,6 +26,7 @@ mod string_constraints;
 mod value;
 mod verifier;
 
+#[allow(clippy::module_name_repetitions)]
 pub use error::VerificationError;
 pub use value::is_leap_year;
 pub use verifier::verify_class as verify;
